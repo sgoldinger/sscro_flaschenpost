@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tractive Tracker + My Location</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+Z5ymbX1DSbDhWiLqexrW0pQ1WG4iMEpE7Ffb8jWs="
+    crossorigin=""
+  />
+  <style>
+    html,
+    body,
+    #map {
+      height: 100%;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-DxptA59i5nBsXqz4dUFVNr+0T3DPG4d3zFv+9XmVfXY="
+    crossorigin=""
+  ></script>
+  <script>
+    // ===== CONFIG =====
+    const PUBLIC_SHARE_ID = 'b995bb953c'; // <- your tracker public share ID
+    const POLLING_MS = 15000;            // refresh rate (15 s)
+    const TRACKER_ENDPOINT = `https://graph.tractive.com/3/public_share/${PUBLIC_SHARE_ID}/position`;
+
+    // ===== MAP INITIALISATION =====
+    const map = L.map('map').setView([0, 0], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let trackerMarker, userMarker;
+
+    // ===== USER LOCATION =====
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        ({ coords: { latitude, longitude } }) => {
+          userMarker = L.marker([latitude, longitude], {
+            title: 'You',
+            icon: L.icon({
+              iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x-green.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41]
+            })
+          }).addTo(map).bindPopup('Your current position');
+          fitView();
+        },
+        (err) => console.warn('Geolocation error:', err),
+        { enableHighAccuracy: true }
+      );
+    } else {
+      console.warn('Geolocation not supported in this browser.');
+    }
+
+    // ===== TRACKER LOCATION =====
+    async function updateTracker() {
+      try {
+        const res = await fetch(TRACKER_ENDPOINT);
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+
+        // The public-share API currently returns either {lat, lng} or {position:{lat,lng}}
+        const lat = data.lat ?? data.position?.lat;
+        const lng = data.lng ?? data.position?.lng;
+        if (lat == null || lng == null) return;
+
+        if (!trackerMarker) {
+          trackerMarker = L.marker([lat, lng], { title: 'Tracker' })
+            .addTo(map)
+            .bindPopup('Tracker location');
+        } else {
+          trackerMarker.setLatLng([lat, lng]);
+        }
+        fitView();
+      } catch (err) {
+        console.error('Failed to fetch tracker position:', err);
+      }
+    }
+
+    // Keep both markers visible
+    function fitView() {
+      const grp = L.featureGroup([trackerMarker, userMarker].filter(Boolean));
+      if (grp.getLayers().length) {
+        map.fitBounds(grp.getBounds().pad(0.25));
+      }
+    }
+
+    // Initial & periodic fetch
+    updateTracker();
+    setInterval(updateTracker, POLLING_MS);
+  </script>
+</body>
+</html>
