@@ -66,7 +66,8 @@
 
         // The public-share API currently returns either {lat, lng} or {position:{lat,lng}}
         const lat = data.lat ?? data.position?.lat;
-        const lng = data.lng ?? data.position?.lng;
+        //const lng = data.lng ?? data.position?.lng;
+        const lng = data.lng ?? data.lon ?? data.position?.lng ?? data.position?.lon;
         if (lat == null || lng == null) return;
 
         if (!trackerMarker) {
