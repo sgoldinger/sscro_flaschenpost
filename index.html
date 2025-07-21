@@ -34,6 +34,14 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
+    const trackerIcon = L.icon({
+  iconUrl: 'img/tracker-icon.svg',           // or full https:// URL
+  iconSize:   [25, 41],   // adjust if you want bigger/smaller
+  iconAnchor: [12, 41],   // tip of the pin
+  shadowUrl:  'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  shadowSize: [41, 41]
+});
+    
     let trackerMarker, userMarker;
 
     // ===== USER LOCATION =====
@@ -73,7 +81,7 @@
         if (lat == null || lng == null) return;
 
         if (!trackerMarker) {
-          trackerMarker = L.marker([lat, lng], { title: 'Tracker' })
+          trackerMarker = L.marker([lat, lng], { title: 'Tracker', icon: trackerIcon })
             .addTo(map)
             .bindPopup('Tracker location');
         } else {
