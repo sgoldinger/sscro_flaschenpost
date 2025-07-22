@@ -7,51 +7,128 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html,body,#map{height:100%;margin:0;}
-    #compassBtn{
-      position:absolute;top:10px;right:10px;z-index:1000;
-      padding:6px 12px;border:none;border-radius:6px;
-      background:#2e86ab;color:#fff;font-size:0.9rem;cursor:pointer;
-      display:none;box-shadow:0 2px 6px rgba(0,0,0,.25);
-    }
   </style>
 </head>
 <body>
-  <button id="compassBtn">Enable&nbsp;Compass</button>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- non-minified build (known good) -->
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.js"></script>
 
   <script>
     /* CONFIG */
-    const PUBLIC_SHARE_ID='b995bb953c';
-    const POLLING_MS=15000;
-    // Replace with your proxy if needed
+    const PUBLIC_SHARE_ID = 'b995bb953c';
+    const POLLING_MS      = 15000;
+    // 👉 swap in your CORS proxy URL if you set one up
         const TRACKER_ENDPOINT = `https://floral-bread-d4f1.goldinger.workers.dev/b995bb953c`;
 
     /* MAP */
-    const map=L.map('map').setView([0,0],13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map);
+    const map = L.map('map').setView([0, 0], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
     /* ICONS */
-    const trackerIcon=L.icon({iconUrl:'img/tracker-icon.svg',shadowUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',iconSize:[25,41],iconAnchor:[12,41],shadowSize:[41,41]});
-    const arrowSvg=encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 90'><path d='M30 0L58 90H2z' fill='#38B000' stroke='#1f6f00' stroke-width='4'/></svg>");
-    const userIcon=L.icon({iconUrl:`data:image/svg+xml,${arrowSvg}`,iconSize:[30,45],iconAnchor:[15,40],popupAnchor:[0,-40]});
+    const trackerIcon = L.icon({
+      iconUrl   : 'img/tracker-icon.svg',
+      shadowUrl : 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize   : [25, 41], iconAnchor : [12, 41], shadowSize : [41, 41]
+    });
+
+    const arrowSvg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 90'><path d='M30 0L58 90H2z' fill='#38B000' stroke='#1f6f00' stroke-width='4'/></svg>`);
+    const userIcon = L.icon({
+      iconUrl    : `data:image/svg+xml,${arrowSvg}`,
+      iconSize   : [30, 45], iconAnchor : [15, 40], popupAnchor: [0, -40]
+    });
 
     /* STATE */
-    let trackerMarker,userMarker;
-    function fit(){const g=L.featureGroup([trackerMarker,userMarker].filter(Boolean));if(g.getLayers().length)map.fitBounds(g.getBounds().pad(.25));}
+    let trackerMarker, userMarker;
+
+    function fit() {
+      const g = L.featureGroup([trackerMarker, userMarker].filter(Boolean));
+      if (g.getLayers().length) map.fitBounds(g.getBounds().pad(0.25));
+    }
 
     /* GEOLOCATION */
-    if('geolocation'in navigator){navigator.geolocation.watchPosition(({coords})=>{const{latitude,longitude,heading}=coords;if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center bottom'}).addTo(map).bindPopup('Your position');setupOrientation();}else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}fit();},console.warn,{enableHighAccuracy:true,maximumAge:0});}
+    if ('geolocation' in navigator) {
+      navigator.geolocation.watchPosition(({ coords }) => {
+        const { latitude, longitude, heading } = coords;
 
-    /* ORIENTATION */
-    function setupOrientation(){if(!('DeviceOrientationEvent'in window))return;const addListener=()=>{window.addEventListener('deviceorientation',e=>{if(!userMarker)return;const h=getHeading(e);if(h!=null)userMarker.setRotationAngle(h);},true);};if(typeof DeviceOrientationEvent.requestPermission==='function'){const btn=document.getElementById('compassBtn');btn.style.display='block';btn.addEventListener('click',async()=>{try{const p=await DeviceOrientationEvent.requestPermission();if(p==='granted'){addListener();btn.remove();}}catch{alert('Compass permission denied');}},{once:true});}else{addListener();}}
-    function getHeading(e){if('webkitCompassHeading'in e&&Number.isFinite(e.webkitCompassHeading))return e.webkitCompassHeading;if(Number.isFinite(e.alpha))return(360-e.alpha)%360;return null;}
+        if (!userMarker) {
+          userMarker = L.marker([latitude, longitude], {
+            icon: userIcon,
+            rotationAngle : heading || 0,
+            rotationOrigin: 'center bottom'
+          }).addTo(map).bindPopup('Your position');
 
-    /* TRACKER */
-    async function updateTracker(){try{const res=await fetch(TRACKER_ENDPOINT);if(!res.ok)throw new Error(res.statusText);const d=await res.json();const lat=d.lat??d.position?.lat;const lng=d.lng??d.lon??d.position?.lng??d.position?.lon;if(lat==null||lng==null)return;if(!trackerMarker){trackerMarker=L.marker([lat,lng],{icon:trackerIcon}).addTo(map).bindPopup('Tracker');}else{trackerMarker.setLatLng([lat,lng]);}fit();}catch(err){console.error('tracker fetch',err);}}
-    updateTracker();setInterval(updateTracker,POLLING_MS);
+          initCompass(); // only start orientation listener once marker exists
+        } else {
+          userMarker.setLatLng([latitude, longitude]);
+          if (Number.isFinite(heading)) userMarker.setRotationAngle(heading);
+        }
+        fit();
+      }, console.warn, { enableHighAccuracy: true, maximumAge: 0 });
+    }
+
+    /* ORIENTATION – works automatically on Android; needs one tap on iOS */
+    function initCompass() {
+      if (!('DeviceOrientationEvent' in window)) return;
+
+      // util to extract a compass heading in degrees CW from north
+      const headingFromEvent = (e) => {
+        if ('webkitCompassHeading' in e && Number.isFinite(e.webkitCompassHeading)) return e.webkitCompassHeading;
+        if (Number.isFinite(e.alpha)) return (360 - e.alpha) % 360;
+        return null;
+      };
+
+      const addListener = () => {
+        window.addEventListener('deviceorientation', (e) => {
+          const h = headingFromEvent(e);
+          if (h != null && userMarker) userMarker.setRotationAngle(h);
+        }, true);
+      };
+
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // iOS 13+ – requires a user gesture *somewhere* on the page.
+        const oneTimeHandler = () => {
+          DeviceOrientationEvent.requestPermission()
+            .then((p) => { if (p === 'granted') addListener(); })
+            .catch(() => {/* ignore denial */});
+          document.removeEventListener('click', oneTimeHandler);
+          document.removeEventListener('touchend', oneTimeHandler);
+        };
+        document.addEventListener('click', oneTimeHandler, { once: true });
+        document.addEventListener('touchend', oneTimeHandler, { once: true });
+      } else {
+        // Android / older iOS – no permission required.
+        addListener();
+      }
+    }
+
+    /* TRACKER FETCH */
+    async function updateTracker() {
+      try {
+        const res = await fetch(TRACKER_ENDPOINT);
+        if (!res.ok) throw new Error(res.statusText);
+        const d   = await res.json();
+        const lat = d.lat ?? d.position?.lat;
+        const lng = d.lng ?? d.lon ?? d.position?.lng ?? d.position?.lon;
+        if (lat == null || lng == null) return;
+
+        if (!trackerMarker) {
+          trackerMarker = L.marker([lat, lng], { icon: trackerIcon }).addTo(map).bindPopup('Tracker');
+        } else {
+          trackerMarker.setLatLng([lat, lng]);
+        }
+        fit();
+      } catch (err) {
+        console.error('Tracker fetch failed', err);
+      }
+    }
+
+    updateTracker();
+    setInterval(updateTracker, POLLING_MS);
   </script>
 </body>
 </html>
