@@ -2,108 +2,133 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Tractive Tracker + Heading</title>
+  <title>Tracker & Compass Map</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body, #map { height: 100%; margin: 0; }
+    #enableCompass {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      background: #2e86ab;
+      color: #fff;
+      font-size: 0.9rem;
+      display: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
   </style>
 </head>
 <body>
+  <button id="enableCompass">Enable Compass</button>
   <div id="map"></div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Rotated Marker plugin -->
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.min.js"></script>
 
   <script>
     /* ===== CONFIG ===== */
     const PUBLIC_SHARE_ID   = 'b995bb953c';
-    const POLLING_MS        = 15000;  // 15 s
+    const POLLING_MS        = 15000;
+    // ⚠️ Replace the URL below with your Cloudflare Worker if you set one up
+    // e.g. `https://tractive-proxy.youraccount.workers.dev/${PUBLIC_SHARE_ID}`
     const TRACKER_ENDPOINT = `https://floral-bread-d4f1.goldinger.workers.dev/b995bb953c`;
 
-    /* ===== MAP & TILES ===== */
+    /* ===== MAP INITIALISATION ===== */
     const map = L.map('map').setView([0, 0], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
     /* ===== ICONS ===== */
-    // tracker — custom bottle pin you already uploaded
     const trackerIcon = L.icon({
-      iconUrl   : 'img/tracker-icon2.png',
+      iconUrl   : 'img/tracker-icon.svg',
       shadowUrl : 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       iconSize   : [25, 41],
       iconAnchor : [12, 41],
       shadowSize : [41, 41]
     });
 
-    // user — arrow that can visibly rotate
     const arrowSvg = encodeURIComponent(`
       <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'>
         <path d='M30 0L54 60H6z' fill='#38B000' stroke='#1f6f00' stroke-width='3'/>
       </svg>`);
     const userIcon = L.icon({
       iconUrl    : `data:image/svg+xml,${arrowSvg}`,
-      iconSize   : [30, 30],       // arrow size
-      iconAnchor : [15, 25],       // tip at [15,25]
+      iconSize   : [30, 30],
+      iconAnchor : [15, 25],
       popupAnchor: [0, -25]
     });
 
     /* ===== STATE ===== */
     let trackerMarker, userMarker;
 
+    /* ===== Helper: fit both markers ===== */
     function fitView() {
       const g = L.featureGroup([trackerMarker, userMarker].filter(Boolean));
       if (g.getLayers().length) map.fitBounds(g.getBounds().pad(0.25));
     }
 
-    /* ===== USER POSITION (GPS + heading) ===== */
+    /* ===== USER POSITION + HEADING ===== */
     if ('geolocation' in navigator) {
-      navigator.geolocation.watchPosition(
-        ({ coords }) => {
-          const { latitude, longitude, heading } = coords;
-          if (!userMarker) {
-            userMarker = L.marker([latitude, longitude], {
-              icon: userIcon,
-              rotationAngle : heading || 0,
-              rotationOrigin: 'center center',
-              title: 'You'
-            }).addTo(map).bindPopup('Your position');
-          } else {
-            userMarker.setLatLng([latitude, longitude]);
-            if (heading != null && !isNaN(heading)) {
-              userMarker.setRotationAngle(heading);
-            }
-          }
-          fitView();
-        },
-        (err) => console.warn('Geolocation error', err),
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
-      );
+      navigator.geolocation.watchPosition(({ coords }) => {
+        const { latitude, longitude, heading } = coords;
+
+        if (!userMarker) {
+          userMarker = L.marker([latitude, longitude], {
+            icon: userIcon,
+            rotationAngle : heading || 0,
+            rotationOrigin: 'center center',
+            title: 'You'
+          }).addTo(map).bindPopup('Your position');
+        } else {
+          userMarker.setLatLng([latitude, longitude]);
+          if (heading != null && !isNaN(heading)) userMarker.setRotationAngle(heading);
+        }
+        fitView();
+      }, console.warn, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
     }
 
-    /* ===== DeviceOrientation fallback (gives heading even when stationary) ===== */
+    /* ===== Compass via DeviceOrientation (needs user gesture on iOS) ===== */
     function enableOrientation() {
       window.addEventListener('deviceorientation', (e) => {
         if (!userMarker) return;
-        const alpha = e.alpha;          // 0-360°, 0 = north
-        if (alpha == null || isNaN(alpha)) return;
-        const compassHeading = 360 - alpha; // convert to clockwise-from-north
+        if (e.absolute === false && e.alpha == null) return; // unsupported
+        const compassHeading = 360 - e.alpha; // convert to clockwise-from-north
         userMarker.setRotationAngle(compassHeading);
       });
     }
-    if (window.DeviceOrientationEvent) {
+
+    (function initOrientationPermission() {
+      const btn = document.getElementById('enableCompass');
+      if (!window.DeviceOrientationEvent) return; // not supported
+
       if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-        // iOS 13+
-        DeviceOrientationEvent.requestPermission()
-          .then(p => { if (p === 'granted') enableOrientation(); })
-          .catch(console.error);
+        // iOS 13+ - need explicit gesture
+        btn.style.display = 'block';
+        btn.addEventListener('click', async () => {
+          try {
+            const state = await DeviceOrientationEvent.requestPermission();
+            if (state === 'granted') {
+              enableOrientation();
+              btn.remove();
+            } else {
+              alert('Compass permission denied');
+            }
+          } catch (err) {
+            alert('Error requesting compass permission');
+            console.error(err);
+          }
+        }, { once: true });
       } else {
+        // Android & older Safari – no permission prompt needed
         enableOrientation();
       }
-    }
+    })();
 
     /* ===== TRACKER POSITION ===== */
     async function updateTracker() {
@@ -123,9 +148,10 @@
         }
         fitView();
       } catch (err) {
-        console.error('Failed to fetch tracker', err);
+        console.error('Tracker fetch failed:', err);
       }
     }
+
     updateTracker();
     setInterval(updateTracker, POLLING_MS);
   </script>
