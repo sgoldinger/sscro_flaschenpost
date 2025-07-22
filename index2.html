@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tractive Tracker + Heading</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Rotated Marker plugin for bearing arrows -->
+  <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.min.js"></script>
+
+  <script>
+    /* ===== CONFIG ===== */
+    const PUBLIC_SHARE_ID = 'b995bb953c';            // tracker public share ID
+    const POLLING_MS      = 15000;                   // refresh rate (15 s)
+    // If you set up a Cloudflare Worker proxy, swap the URL below accordingly.
+    const TRACKER_ENDPOINT = `https://graph.tractive.com/3/public_share/${PUBLIC_SHARE_ID}/position`;
+
+    /* ===== MAP SET-UP ===== */
+    const map = L.map('map').setView([0, 0], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    /* ===== CUSTOM ICONS ===== */
+    const trackerIcon = L.icon({
+      iconUrl   : 'img/tracker-icon.svg', // your custom bottle-pin
+      shadowUrl : 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize   : [25, 41],
+      iconAnchor : [12, 41],
+      shadowSize : [41, 41]
+    });
+
+    const userIcon = L.icon({
+      iconUrl   : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+      shadowUrl : 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize   : [25, 41],
+      iconAnchor : [12, 41],
+      shadowSize : [41, 41]
+    });
+
+    /* ===== STATE ===== */
+    let trackerMarker, userMarker;
+
+    function fitView() {
+      const group = L.featureGroup([trackerMarker, userMarker].filter(Boolean));
+      if (group.getLayers().length) map.fitBounds(group.getBounds().pad(0.25));
+    }
+
+    /* ===== USER POSITION + HEADING ===== */
+    if ('geolocation' in navigator) {
+      navigator.geolocation.watchPosition(
+        ({ coords: { latitude, longitude, heading } }) => {
+          // create or update the marker
+          if (!userMarker) {
+            userMarker = L.marker([latitude, longitude], {
+              title: 'You',
+              icon : userIcon,
+              rotationAngle : heading || 0,   // requires rotatedMarker plugin
+              rotationOrigin: 'center bottom'
+            }).addTo(map).bindPopup('Your current position');
+          } else {
+            userMarker.setLatLng([latitude, longitude]);
+            if (heading != null && !isNaN(heading)) {
+              userMarker.setRotationAngle(heading);
+            }
+          }
+          fitView();
+        },
+        (err) => console.warn('Geolocation error:', err),
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+      );
+    } else {
+      console.warn('Geolocation not supported in this browser.');
+    }
+
+    /* ===== TRACKER POSITION ===== */
+    async function updateTracker() {
+      try {
+        const res = await fetch(TRACKER_ENDPOINT);
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+
+        // API sometimes returns lat/lng or lat/lon inside position {}
+        const lat = data.lat ?? data.position?.lat;
+        const lng = data.lng ?? data.lon ?? data.position?.lng ?? data.position?.lon;
+        if (lat == null || lng == null) return;
+
+        if (!trackerMarker) {
+          trackerMarker = L.marker([lat, lng], { title: 'Tracker', icon: trackerIcon })
+            .addTo(map)
+            .bindPopup('Tracker location');
+        } else {
+          trackerMarker.setLatLng([lat, lng]);
+        }
+        fitView();
+      } catch (err) {
+        console.error('Failed to fetch tracker position:', err);
+      }
+    }
+
+    // initial fetch & polling
+    updateTracker();
+    setInterval(updateTracker, POLLING_MS);
+  </script>
+</body>
+</html>
