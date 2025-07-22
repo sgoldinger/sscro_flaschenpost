@@ -55,8 +55,13 @@
 
     /* STATE */
     let trackerMarker, userMarker;
+    let userInteracted = false;           // ⇦ new line
+    map.on('zoomstart dragstart', () => { // ⇦ new listener
+          userInteracted = true;
+    });
 
     function fit() {
+      if (userInteracted) return;          // respect manual zoom/pan
       const g = L.featureGroup([trackerMarker, userMarker].filter(Boolean));
       if (g.getLayers().length) map.fitBounds(g.getBounds().pad(0.25));
     }
