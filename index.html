@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <title>Tractive Tracker + Heading</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body, #map { height: 100%; margin: 0; }
   </style>
@@ -15,59 +14,63 @@
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Rotated Marker plugin for bearing arrows -->
+  <!-- Rotated Marker plugin -->
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.min.js"></script>
 
   <script>
     /* ===== CONFIG ===== */
-    const PUBLIC_SHARE_ID = 'b995bb953c';            // tracker public share ID
-    const POLLING_MS      = 15000;                   // refresh rate (15 s)
-    // If you set up a Cloudflare Worker proxy, swap the URL below accordingly.
-    const TRACKER_ENDPOINT = `https://floral-bread-d4f1.goldinger.workers.dev/b995bb953c`;
+    const PUBLIC_SHARE_ID   = 'b995bb953c';
+    const POLLING_MS        = 15000;  // 15 s
+    const TRACKER_ENDPOINT  = `https://graph.tractive.com/3/public_share/${PUBLIC_SHARE_ID}/position`; // swap if you proxy
 
-    /* ===== MAP SET-UP ===== */
+    /* ===== MAP & TILES ===== */
     const map = L.map('map').setView([0, 0], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    /* ===== CUSTOM ICONS ===== */
+    /* ===== ICONS ===== */
+    // tracker — custom bottle pin you already uploaded
     const trackerIcon = L.icon({
-      iconUrl   : 'img/tracker-icon2.png', // your custom bottle-pin
-      shadowUrl : 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize   : [42, 42], //110,110
-      iconAnchor : [21, 42], //55,110
-      shadowSize : [42, 42] //110,110
-    });
-
-    const userIcon = L.icon({
-      iconUrl   : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+      iconUrl   : 'img/tracker-icon.svg',
       shadowUrl : 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       iconSize   : [25, 41],
       iconAnchor : [12, 41],
       shadowSize : [41, 41]
     });
 
+    // user — arrow that can visibly rotate
+    const arrowSvg = encodeURIComponent(`
+      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'>
+        <path d='M30 0L54 60H6z' fill='#38B000' stroke='#1f6f00' stroke-width='3'/>
+      </svg>`);
+    const userIcon = L.icon({
+      iconUrl    : `data:image/svg+xml,${arrowSvg}`,
+      iconSize   : [30, 30],       // arrow size
+      iconAnchor : [15, 25],       // tip at [15,25]
+      popupAnchor: [0, -25]
+    });
+
     /* ===== STATE ===== */
     let trackerMarker, userMarker;
 
     function fitView() {
-      const group = L.featureGroup([trackerMarker, userMarker].filter(Boolean));
-      if (group.getLayers().length) map.fitBounds(group.getBounds().pad(0.25));
+      const g = L.featureGroup([trackerMarker, userMarker].filter(Boolean));
+      if (g.getLayers().length) map.fitBounds(g.getBounds().pad(0.25));
     }
 
-    /* ===== USER POSITION + HEADING ===== */
+    /* ===== USER POSITION (GPS + heading) ===== */
     if ('geolocation' in navigator) {
       navigator.geolocation.watchPosition(
-        ({ coords: { latitude, longitude, heading } }) => {
-          // create or update the marker
+        ({ coords }) => {
+          const { latitude, longitude, heading } = coords;
           if (!userMarker) {
             userMarker = L.marker([latitude, longitude], {
-              title: 'You',
-              icon : userIcon,
-              rotationAngle : heading || 0,   // requires rotatedMarker plugin
-              rotationOrigin: 'center bottom'
-            }).addTo(map).bindPopup('Your current position');
+              icon: userIcon,
+              rotationAngle : heading || 0,
+              rotationOrigin: 'center center',
+              title: 'You'
+            }).addTo(map).bindPopup('Your position');
           } else {
             userMarker.setLatLng([latitude, longitude]);
             if (heading != null && !isNaN(heading)) {
@@ -76,11 +79,30 @@
           }
           fitView();
         },
-        (err) => console.warn('Geolocation error:', err),
+        (err) => console.warn('Geolocation error', err),
         { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
       );
-    } else {
-      console.warn('Geolocation not supported in this browser.');
+    }
+
+    /* ===== DeviceOrientation fallback (gives heading even when stationary) ===== */
+    function enableOrientation() {
+      window.addEventListener('deviceorientation', (e) => {
+        if (!userMarker) return;
+        const alpha = e.alpha;          // 0-360°, 0 = north
+        if (alpha == null || isNaN(alpha)) return;
+        const compassHeading = 360 - alpha; // convert to clockwise-from-north
+        userMarker.setRotationAngle(compassHeading);
+      });
+    }
+    if (window.DeviceOrientationEvent) {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // iOS 13+
+        DeviceOrientationEvent.requestPermission()
+          .then(p => { if (p === 'granted') enableOrientation(); })
+          .catch(console.error);
+      } else {
+        enableOrientation();
+      }
     }
 
     /* ===== TRACKER POSITION ===== */
@@ -89,26 +111,21 @@
         const res = await fetch(TRACKER_ENDPOINT);
         if (!res.ok) throw new Error(res.statusText);
         const data = await res.json();
-
-        // API sometimes returns lat/lng or lat/lon inside position {}
         const lat = data.lat ?? data.position?.lat;
         const lng = data.lng ?? data.lon ?? data.position?.lng ?? data.position?.lon;
         if (lat == null || lng == null) return;
 
         if (!trackerMarker) {
-          trackerMarker = L.marker([lat, lng], { title: 'Tracker', icon: trackerIcon })
-            .addTo(map)
-            .bindPopup('Tracker location');
+          trackerMarker = L.marker([lat, lng], { icon: trackerIcon, title: 'Tracker' })
+            .addTo(map).bindPopup('Tracker location');
         } else {
           trackerMarker.setLatLng([lat, lng]);
         }
         fitView();
       } catch (err) {
-        console.error('Failed to fetch tracker position:', err);
+        console.error('Failed to fetch tracker', err);
       }
     }
-
-    // initial fetch & polling
     updateTracker();
     setInterval(updateTracker, POLLING_MS);
   </script>
