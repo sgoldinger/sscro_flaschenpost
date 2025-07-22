@@ -100,10 +100,10 @@
         const h = getHeading(e);
         dbg(`orient alpha:${e.alpha?.toFixed(1)} webkit:${e.webkitCompassHeading} => h:${h}`);
         if (h != null && userMarker) 
-            //{
+            {
           userMarker.setRotationAngle(h);
-        //dbg(`→ setRotationAngle(${h.toFixed(1)})`);
-            //}
+          dbg(`→ SVEN setRotationAngle(${h.toFixed(1)})`);
+            }
       });
     }
     if ('DeviceOrientationEvent' in window) {
