@@ -94,6 +94,25 @@
       //dbg('geolocation unsupported');
     }
 
+      /***** START BUTTON HANDLER *****/
+    document.getElementById('startBtn').addEventListener('click',()=>{
+      document.getElementById('intro').remove();
+      // Geolocation
+      if('geolocation'in navigator){watchId=navigator.geolocation.watchPosition(({coords})=>{
+        const {latitude,longitude,heading}=coords;
+        if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center bottom'}).addTo(map).bindPopup('Your position');}
+        else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}fit();
+      },console.warn,{enableHighAccuracy:true,maximumAge:0});}
+
+      // Compass permission (iOS needs explicit)
+      if(typeof DeviceOrientationEvent==='function'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+        DeviceOrientationEvent.requestPermission().then(p=>{if(p==='granted')enableOrientation();});
+      }else{enableOrientation();}
+
+      // start tracker polling
+      updateTracker();setInterval(updateTracker,POLLING_MS);
+    },{once:true});
+
     /***************** COMPASS VIA ORIENTATION *****************/
     const compassBtn = document.getElementById('enableCompass');
     function getHeading(e) {
@@ -131,24 +150,7 @@
     } else {
       dbg('orientation unsupported');
     }
-  /***** START BUTTON HANDLER *****/
-    document.getElementById('startBtn').addEventListener('click',()=>{
-      document.getElementById('intro').remove();
-      // Geolocation
-      if('geolocation'in navigator){watchId=navigator.geolocation.watchPosition(({coords})=>{
-        const {latitude,longitude,heading}=coords;
-        if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center bottom'}).addTo(map).bindPopup('Your position');}
-        else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}fit();
-      },console.warn,{enableHighAccuracy:true,maximumAge:0});}
 
-      // Compass permission (iOS needs explicit)
-      if(typeof DeviceOrientationEvent==='function'&&typeof DeviceOrientationEvent.requestPermission==='function'){
-        DeviceOrientationEvent.requestPermission().then(p=>{if(p==='granted')enableOrientation();});
-      }else{enableOrientation();}
-
-      // start tracker polling
-      updateTracker();setInterval(updateTracker,POLLING_MS);
-    },{once:true});
     /***************** TRACKER FETCH *****************/
     async function updateTracker() {
       try {
