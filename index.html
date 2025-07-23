@@ -19,12 +19,14 @@
       font-family: monospace; font-size: 0.8rem; border-radius: 4px;
       max-width: 90%; white-space: pre-line;
     }
+
+  #intro button{padding:0.6rem 1.2rem;border:none;border-radius:6px;background:#2e86ab;color:#fff;font-size:1rem;cursor:pointer;}
   </style>
 </head>
 <body>
   <button id="enableCompass">Enable&nbsp;Compass</button>
   <div id="map"></div>
-  <div id="debugBox">heading: n/a\norientation: n/a</div>
+  <div id="debugBox">heading: n/a\norientation: n/a<button id="startBtn">Start</button></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.js"></script>
@@ -145,6 +147,26 @@
     }
     updateTracker();
     setInterval(updateTracker, POLLING_MS);
+
+
+     /***** START BUTTON HANDLER *****/
+    document.getElementById('startBtn').addEventListener('click',()=>{
+      document.getElementById('intro').remove();
+      // Geolocation
+      if('geolocation'in navigator){watchId=navigator.geolocation.watchPosition(({coords})=>{
+        const {latitude,longitude,heading}=coords;
+        if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center bottom'}).addTo(map).bindPopup('Your position');}
+        else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}fit();
+      },console.warn,{enableHighAccuracy:true,maximumAge:0});}
+
+      // Compass permission (iOS needs explicit)
+      if(typeof DeviceOrientationEvent==='function'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+        DeviceOrientationEvent.requestPermission().then(p=>{if(p==='granted')enableOrientation();});
+      }else{enableOrientation();}
+
+      // start tracker polling
+      updateTracker();setInterval(updateTracker,POLLING_MS);
+    },{once:true});
   </script>
 </body>
 </html>
