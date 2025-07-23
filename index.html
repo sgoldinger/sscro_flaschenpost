@@ -140,7 +140,7 @@
         const data = await res.json();
         const lat = data.lat ?? data.position?.lat;
         const lng = data.lng ?? data.lon ?? data.position?.lng ?? data.position?.lon;
-        dbg(`tracker @ ${lat}, ${lng}`);
+        //dbg(`tracker @ ${lat}, ${lng}`);
         if (lat == null || lng == null) return;
         if (!trackerMarker) {
           trackerMarker = L.marker([lat, lng], { icon: trackerIcon }).addTo(map).bindPopup('Tracker');
