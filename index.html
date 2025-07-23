@@ -106,7 +106,7 @@
       window.addEventListener('deviceorientation', e => {
         const h = getHeading(e);
         //dbg(`orient alpha:${e.alpha?.toFixed(1)} webkit:${e.webkitCompassHeading} => h:${h}`);
-        dbg(`SVEN setRotationAngle(${h})`);
+        //dbg(`SVEN setRotationAngle(${h})`);
         if (h != null && userMarker) 
             //{
           userMarker.setRotationAngle(h);
