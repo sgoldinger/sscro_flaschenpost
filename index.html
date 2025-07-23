@@ -96,7 +96,7 @@
 
       /***** START BUTTON HANDLER *****/
     const startButton = document.getElementById('startBtn')
-    startButton.addEventListener('click',()=>{
+    startButton.addEventListener('click',async()=>{
       document.getElementById('intro').remove();
       // Geolocation
       if('geolocation'in navigator){watchId=navigator.geolocation.watchPosition(({coords})=>{
