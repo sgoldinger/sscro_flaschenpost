@@ -7,79 +7,79 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html,body,#map{height:100%;margin:0;}
-    /* Intro overlay */
-    #intro{
-      position:fixed;inset:0;background:rgba(0,0,0,0.1);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      color:#fff;font-family:sans-serif;text-align:center;gap:1.2rem;z-index:9999;
-    } 
-    
-    #intro button{padding:0.6rem 1.2rem;border:none;border-radius:6px;background:#2e86ab;color:#fff;font-size:1rem;cursor:pointer;}
+    /* Intro overlay (hidden until map tile loads) */
+    #intro{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);color:#fff;gap:1rem;z-index:9999;font-family:sans-serif;text-align:center}
+    #intro img{width:72px;height:auto}
+    #intro button{padding:.6rem 1.2rem;border:none;border-radius:6px;background:#2e86ab;color:#fff;font-size:1rem;cursor:pointer}
   </style>
 </head>
 <body>
-  <div id="map"></div>
   <div id="intro">
-     <img src="img/intro-icon.png" alt="intro icon" style="width:72px;height:auto;margin-bottom:1rem;">
+    <img src="img/intro-icon.png" alt="intro icon" />
     <h2 style="margin:0">SSCRo - Letzte Runde 2025</h2>
     <p style="margin:0 1rem">Auf der Suche nach der Flaschenpost von John Bottle! Bitte bestätige nach dem Start, dass die GPS- und Kompass-Funktion verwendet werden darf.</p>
     <button id="startBtn">Start</button>
   </div>
 
+  <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.js"></script>
 
   <script>
-    /***** CONFIG *****/
+    /* CONFIG */
     const PUBLIC_SHARE_ID='b995bb953c';
     const POLLING_MS=15000;
-    const TRACKER_ENDPOINT = `https://floral-bread-d4f1.goldinger.workers.dev/b995bb953c`; // swap proxy if needed
+    // 👉 swap with your proxy URL if using one to avoid CORS
+    const TRACKER_ENDPOINT = `https://floral-bread-d4f1.goldinger.workers.dev/b995bb953c`; 
 
-    /***** MAP *****/
+    /* MAP */
     const map=L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+    const satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
       attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       maxZoom:19
     }).addTo(map);
 
-    /***** ICONS *****/
+    // Show intro overlay once first tile image finishes loading
+    const intro=document.getElementById('intro');
+    satellite.once('tileload',()=>{intro.style.display='flex';});
+
+    /* ICONS */
     const trackerIcon=L.icon({iconUrl:'img/tracker-icon3.png',shadowUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',iconSize:[110,110],iconAnchor:[55,110],shadowSize:[110,110]});
     const userIcon=L.icon({iconUrl:'img/sscro_arrow.png',iconSize:[45,80],iconAnchor:[22,40],popupAnchor:[0,-40]});
 
-    /***** STATE *****/
-    let trackerMarker,userMarker,watchId;
-    function fit(){const g=L.featureGroup([trackerMarker,userMarker].filter(Boolean));if(g.getLayers().length&&!userInteracted)map.fitBounds(g.getBounds().pad(.25));}
-
-    // stop auto-fit after manual zoom/drag
-    let userInteracted=false;
+    /* STATE */
+    let trackerMarker,userMarker;let userInteracted=false;
     map.on('zoomstart dragstart',()=>{userInteracted=true;});
 
-    /***** TRACKER FETCH *****/
-    async function updateTracker(){try{const r=await fetch(TRACKER_ENDPOINT);if(!r.ok)throw new Error(r.statusText);const d=await r.json();const lat=d.lat??d.position?.lat;const lng=d.lng??d.lon??d.position?.lng??d.position?.lon;if(lat==null||lng==null)return;if(!trackerMarker){trackerMarker=L.marker([lat,lng],{icon:trackerIcon}).addTo(map).bindPopup('Tracker');}else{trackerMarker.setLatLng([lat,lng]);}fit();}catch(err){console.error('tracker fetch',err);}}
+    function fit(){const g=L.featureGroup([trackerMarker,userMarker].filter(Boolean));if(g.getLayers().length&&!userInteracted)map.fitBounds(g.getBounds().pad(.25));}
 
-    /***** COMPASS HELPERS *****/
-    function headingFromEvent(e){if('webkitCompassHeading'in e&&Number.isFinite(e.webkitCompassHeading))return e.webkitCompassHeading;if(Number.isFinite(e.alpha))return(360-e.alpha)%360;return null;}
-    function enableOrientation(){if(!('DeviceOrientationEvent'in window))return;window.addEventListener('deviceorientation',e=>{const h=headingFromEvent(e);if(h!=null&&userMarker)userMarker.setRotationAngle(h);},true);}
+    /* UTIL heading */
+    const headingFromEvent=e=>('webkitCompassHeading'in e&&Number.isFinite(e.webkitCompassHeading)?e.webkitCompassHeading:Number.isFinite(e.alpha)?(360-e.alpha)%360:null);
 
-    /***** START BUTTON HANDLER *****/
-    document.getElementById('startBtn').addEventListener('click',()=>{
-      document.getElementById('intro').remove();
+    /* MAIN START BUTTON */
+    document.getElementById('startBtn').addEventListener('click',async()=>{
+      intro.remove();
       // Geolocation
-      if('geolocation'in navigator){watchId=navigator.geolocation.watchPosition(({coords})=>{
+      if('geolocation'in navigator){navigator.geolocation.watchPosition(({coords})=>{
         const {latitude,longitude,heading}=coords;
         if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center bottom'}).addTo(map).bindPopup('Your position');}
         else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}fit();
       },console.warn,{enableHighAccuracy:true,maximumAge:0});}
 
-      // Compass permission (iOS needs explicit)
+      // Compass permission (iOS) then listener
       if(typeof DeviceOrientationEvent==='function'&&typeof DeviceOrientationEvent.requestPermission==='function'){
-        DeviceOrientationEvent.requestPermission().then(p=>{if(p==='granted')enableOrientation();});
+        try{const p=await DeviceOrientationEvent.requestPermission();if(p==='granted')enableOrientation();}catch{console.warn('orientation denied');}
       }else{enableOrientation();}
 
-      // start tracker polling
+      // Start tracker polling
       updateTracker();setInterval(updateTracker,POLLING_MS);
     },{once:true});
+
+    function enableOrientation(){if(!('DeviceOrientationEvent'in window))return;window.addEventListener('deviceorientation',e=>{const h=headingFromEvent(e);if(h!=null&&userMarker)userMarker.setRotationAngle(h);},true);}
+
+    /* TRACKER FETCH */
+    async function updateTracker(){try{const r=await fetch(TRACKER_ENDPOINT);if(!r.ok)throw new Error(r.statusText);const d=await r.json();const lat=d.lat??d.position?.lat;const lng=d.lng??d.lon??d.position?.lng??d.position?.lon;if(lat==null||lng==null)return;if(!trackerMarker){trackerMarker=L.marker([lat,lng],{icon:trackerIcon}).addTo(map).bindPopup('Tracker');}else{trackerMarker.setLatLng([lat,lng]);}fit();}catch(err){console.error('tracker',err);}}
   </script>
 </body>
 </html>
