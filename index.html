@@ -20,7 +20,7 @@
       max-width: 90%; white-space: pre-line;
     }
 
-  //#debugBox button{padding:0.6rem 1.2rem;border:none;border-radius:6px;background:#2e86ab;color:#fff;font-size:1rem;cursor:pointer;}
+  #debugBox button{padding:0.6rem 1.2rem;border:none;border-radius:6px;background:#2e86ab;color:#fff;font-size:1rem;cursor:pointer;}
   </style>
 </head>
 <body>
@@ -95,7 +95,8 @@
     }
 
       /***** START BUTTON HANDLER *****/
-    document.getElementById('startBtn').addEventListener('click',()=>{
+    const startButton = document.getElementById('startBtn')
+    startButton.addEventListener('click',()=>{
       document.getElementById('intro').remove();
       // Geolocation
       if('geolocation'in navigator){watchId=navigator.geolocation.watchPosition(({coords})=>{
