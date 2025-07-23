@@ -33,12 +33,12 @@
 </head>
 <body>
   <div id="map"></div>
-  //<div id="intro">
-    // <img src="img/intro-icon.png" alt="intro icon" style="width:72px;height:auto;margin-bottom:1rem;">
-    //<h2 style="margin:0">SSCRo - Letzte Runde 2025</h2>
-    //<p style="margin:0 1rem">Auf der Suche nach der Flaschenpost von John Bottle! Bitte bestätige nach dem Start, dass die GPS- und Kompass-Funktion verwendet werden darf.</p>
-    //<button id="startBtn">Start</button>
-  //</div>
+ /* <div id="intro">
+     <img src="img/intro-icon.png" alt="intro icon" style="width:72px;height:auto;margin-bottom:1rem;">
+    <h2 style="margin:0">SSCRo - Letzte Runde 2025</h2>
+    <p style="margin:0 1rem">Auf der Suche nach der Flaschenpost von John Bottle! Bitte bestätige nach dem Start, dass die GPS- und Kompass-Funktion verwendet werden darf.</p>
+    <button id="startBtn">Start</button>
+  </div>*/
 
   <div id="debugBox">
      <img src="img/intro-icon.png" alt="intro icon" style="width:72px;height:auto;margin-bottom:1rem;">
@@ -124,7 +124,7 @@
     function enableOrientation(){if(!('DeviceOrientationEvent'in window))return;window.addEventListener('deviceorientation',e=>{const h=headingFromEvent(e);if(h!=null&&userMarker)userMarker.setRotationAngle(h);},true);}
 
     /***** START BUTTON HANDLER *****/
-    document.getElementById('startBtn').addEventListener('click',()=>{
+  /*  document.getElementById('startBtn').addEventListener('click',()=>{
       //document.getElementById('intro').remove();
       // Geolocation
       if('geolocation'in navigator){watchId=navigator.geolocation.watchPosition(({coords})=>{
@@ -140,7 +140,7 @@
 
       // start tracker polling
       updateTracker();setInterval(updateTracker,POLLING_MS);
-    },{once:true});
+    },{once:true});*/
   </script>
 </body>
 </html>
