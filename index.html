@@ -53,7 +53,7 @@
     const PUBLIC_SHARE_ID='b995bb953c';
     const POLLING_MS=15000;
     const TRACKER_ENDPOINT = `https://floral-bread-d4f1.goldinger.workers.dev/b995bb953c`; // swap proxy if needed
-
+    const compassBtn = document.getElementById('enableCompass');
     /***** MAP *****/
     const map=L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
@@ -81,7 +81,7 @@
     function enableOrientation(){if(!('DeviceOrientationEvent'in window))return;window.addEventListener('deviceorientation',e=>{const h=headingFromEvent(e);if(h!=null&&userMarker)userMarker.setRotationAngle(h);},true);}
 
     /***** START BUTTON HANDLER *****/
-    document.getElementById('enableCompass').addEventListener('click',()=>{
+     compassBtn.addEventListener('click',()=>{
       document.getElementById('intro').remove();
       // Geolocation
       if('geolocation'in navigator){watchId=navigator.geolocation.watchPosition(({coords})=>{
