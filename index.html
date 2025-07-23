@@ -37,13 +37,28 @@
 
     /***** MAP *****/
     const map=L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
+    
     const satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
       attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       maxZoom:19
     }).addTo(map);
     // show intro only after first tiles load so transparency reveals map
-    const introEl=document.getElementById('intro');
-    satellite.once('load',()=>{introEl.style.display='flex';});
+    const satellite = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { attribution:'Tiles © Esri …', maxZoom:19 }
+  ).addTo(map);
+
+  const intro = document.getElementById('intro');
+
+  /* 🔑 show overlay after the FIRST tile image arrives */
+  satellite.once('tileload', () => {
+    intro.style.display = 'flex';
+  });
+
+  /* fallback: guarantee it shows even if “tileload” never fires
+     (rare slow-network edge-case) */
+  setTimeout(() => { if (intro.style.display === 'none') intro.style.display = 'flex'; }, 7000);
+    
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
       attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       maxZoom:19
