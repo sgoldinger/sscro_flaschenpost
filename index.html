@@ -7,24 +7,32 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html,body,#map{height:100%;margin:0;}
-    /* Intro overlay */
+    /* Intro overlay
     #intro{
-      position:fixed;inset:0;background:rgba(0,0,0,0.2);
+      position:fixed;inset:0;background:rgba(0,0,0,0.1);
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       color:#fff;font-family:sans-serif;text-align:center;gap:1.2rem;z-index:9999;
+    } */
+
+      #intro {
+      position: absolute; bottom: 10px; left: 10px; z-index: 1000;
+      background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px;
+      font-family: monospace; font-size: 0.8rem; border-radius: 4px;
+      max-width: 90%; white-space: pre-line;
     }
+    
     #intro button{padding:0.6rem 1.2rem;border:none;border-radius:6px;background:#2e86ab;color:#fff;font-size:1rem;cursor:pointer;}
   </style>
 </head>
 <body>
+  <div id="map"></div>
   <div id="intro">
-    <img src="img/intro-icon.png" alt="intro icon" style="width:72px;height:auto;margin-bottom:1rem;">
-    <h2 style="margin:0">Welcome</h2>
-    <p style="margin:0 1rem">Start bottle‑message adventure</p>
-    <button id="startBtn">Okay</button>
+     <img src="img/intro-icon.png" alt="intro icon" style="width:72px;height:auto;margin-bottom:1rem;">
+    <h2 style="margin:0">SSCRo - Letzte Runde 2025</h2>
+    <p style="margin:0 1rem">Auf der Suche nach der Flaschenpost von John Bottle! Bitte bestätige nach dem Start, dass die GPS- und Kompass-Funktion verwendet werden darf.</p>
+    <button id="startBtn">Start</button>
   </div>
 
-  <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.js"></script>
@@ -37,28 +45,6 @@
 
     /***** MAP *****/
     const map=L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
-    
-    const satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
-      attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
-      maxZoom:19
-    }).addTo(map);
-    // show intro only after first tiles load so transparency reveals map
-    const satellite = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution:'Tiles © Esri …', maxZoom:19 }
-  ).addTo(map);
-
-  const intro = document.getElementById('intro');
-
-  /* 🔑 show overlay after the FIRST tile image arrives */
-  satellite.once('tileload', () => {
-    intro.style.display = 'flex';
-  });
-
-  /* fallback: guarantee it shows even if “tileload” never fires
-     (rare slow-network edge-case) */
-  setTimeout(() => { if (intro.style.display === 'none') intro.style.display = 'flex'; }, 7000);
-    
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
       attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
       maxZoom:19
