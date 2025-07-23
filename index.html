@@ -79,7 +79,7 @@
     if ('geolocation' in navigator) {
       navigator.geolocation.watchPosition(({ coords }) => {
         const { latitude, longitude, heading, accuracy } = coords;
-        dbg(`geo: lat ${latitude.toFixed(5)} lon ${longitude.toFixed(5)} heading ${heading}`);
+        //dbg(`geo: lat ${latitude.toFixed(5)} lon ${longitude.toFixed(5)} heading ${heading}`);
         if (!userMarker) {
           userMarker = L.marker([latitude, longitude], {
             icon: userIcon, rotationAngle: heading || 0, rotationOrigin: 'center bottom'
@@ -91,7 +91,7 @@
         fitView();
       }, err => dbg(`geo error: ${err.message}`), { enableHighAccuracy: true });
     } else {
-      dbg('geolocation unsupported');
+      //dbg('geolocation unsupported');
     }
 
     /***************** COMPASS VIA ORIENTATION *****************/
