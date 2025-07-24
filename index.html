@@ -45,7 +45,8 @@
     
 
     /* STATE */
-    let trackerMarker,userMarker;let userInteracted=false;
+    let trackerMarker,userMarker;
+    let lastLive=false;let userInteracted=false;
     map.on('zoomstart dragstart',()=>{userInteracted=true;});
 
     function fit(){const g=L.featureGroup([trackerMarker,userMarker].filter(Boolean));if(g.getLayers().length&&!userInteracted)map.fitBounds(g.getBounds().pad(.25));}
@@ -63,7 +64,12 @@
 
     async function updateTracker(){try{const r=await fetch(TRACKER_ENDPOINT);if(!r.ok)throw new Error(r.statusText);const d=await r.json();const lat=d.lat??d.position?.lat;const lng=d.lng??d.lon??d.position?.lng??d.position?.lon;if(lat==null||lng==null)return;const live=d.lt_active===true;const speed=d.speed;const ts=new Date((d.time||Date.now()/1000)*1000).toLocaleTimeString();const popupHtml=`<strong>Tracker</strong><br>Time: ${ts}<br>Speed: ${speed??'–'} m/s${live?'<br><span style=\"color:#e63946;font-weight:bold\">LIVE</span>':''}`;
       const icon=trackerIconStatic;
-      if(!trackerMarker){trackerMarker=L.marker([lat,lng],{icon}).addTo(map).bindPopup(popupHtml);}else{trackerMarker.setLatLng([lat,lng]);trackerMarker.setIcon(icon);trackerMarker.setPopupContent(popupHtml);}fit();}catch(err){console.error('tracker',err);}}
+      if(!trackerMarker){trackerMarker=L.marker([lat,lng],{icon}).addTo(map).bindPopup(popupHtml);}else{trackerMarker.setLatLng([lat,lng]);trackerMarker.setIcon(icon);trackerMarker.setPopupContent(popupHtml);}fit();
+      // auto popup based on live status
+      if(live&&!lastLive){trackerMarker.openPopup();}
+      else if(!live&&lastLive){trackerMarker.closePopup();}
+      lastLive=live;
+    }catch(err){console.error('tracker',err);}}
   </script>
 </body>
 </html>
