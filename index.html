@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Tracker & Compass – Satellite View</title>
+  <title>SSCRo - Letzte Runde 2025: John Bottle</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -68,7 +68,7 @@
       // Geolocation
       if('geolocation'in navigator){watchId=navigator.geolocation.watchPosition(({coords})=>{
         const {latitude,longitude,heading}=coords;
-        if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center bottom'}).addTo(map).bindPopup('Sailor\'s position');}
+        if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center center'}).addTo(map).bindPopup('Sailor\'s position');}
         else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}fit();
       },console.warn,{enableHighAccuracy:true,maximumAge:0});}
 
