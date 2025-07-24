@@ -42,8 +42,17 @@
 
     /* ICONS */
     const userIcon=L.icon({iconUrl:'img/user-arrow.png',iconSize:[45,45],iconAnchor:[22,40],popupAnchor:[0,-40]});
-    const trackerIconStatic=L.divIcon({className:'tracker-icon'});
-    const trackerIconLive=L.divIcon({className:'tracker-icon tracker-live'});
+    const trackerIconStatic = L.divIcon({
+  className: 'tracker-icon',
+  iconSize:  [110, 110],    // tell Leaflet the real size
+  iconAnchor:[55, 98]       // x-center, y-bottom (a few px above edge)
+});
+
+const trackerIconLive = L.divIcon({
+  className: 'tracker-icon tracker-live',
+  iconSize:  [110, 110],
+  iconAnchor:[55, 98]
+});
 
     /* STATE */
     let trackerMarker,userMarker;let userInteracted=false;
