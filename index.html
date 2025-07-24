@@ -17,7 +17,7 @@
 </head>
 <body>
   <div id="intro">
-    <<img src="img/intro-icon.png" alt="intro icon" style="width:120px;height:auto;margin-bottom:1rem;">
+    <img src="img/intro-icon.png" alt="intro icon" style="width:120px;height:auto;margin-bottom:1rem;">
     <h2 style="margin:0">SSCRo - Letzte Runde 2025</h2>
     <p style="margin:0 1rem">Auf der Suche nach der Flaschenpost von John Bottle! Bitte bestätige nach dem Start, dass die GPS- und Kompass-Funktion verwendet werden darf.</p>
     <button id="startBtn">Start</button>
@@ -44,7 +44,7 @@
     const trackerIconStatic = L.divIcon({
   className: 'tracker-icon',
   iconSize:  [110, 110],    // tell Leaflet the real size
-  iconAnchor:[55, 98]       // x-center, y-bottom (a few px above edge)
+  iconAnchor:[55, 110]       // x-center, y-bottom (a few px above edge)
 });
 
 
@@ -66,7 +66,7 @@
 
     function enableOrientation(){if(!('DeviceOrientationEvent'in window))return;window.addEventListener('deviceorientation',e=>{const h=headingFromEvent(e);if(h!=null&&userMarker)userMarker.setRotationAngle(h);},true);}    
 
-    async function updateTracker(){try{const r=await fetch(TRACKER_ENDPOINT);if(!r.ok)throw new Error(r.statusText);const d=await r.json();const lat=d.lat??d.position?.lat;const lng=d.lng??d.lon??d.position?.lng??d.position?.lon;if(lat==null||lng==null)return;const live=d.lt_active===true;const speed=d.speed;const ts=new Date((d.time||Date.now()/1000)*1000).toLocaleTimeString();const popupHtml=`<strong>Bottle\'s position</strong><br>Last Update: ${ts}<br>Speed: ${speed??'–'} m/s${live?'<br><span style=\"color:#e63946;font-weight:bold\">LIVE TRACKING</span>':''}`;
+    async function updateTracker(){try{const r=await fetch(TRACKER_ENDPOINT);if(!r.ok)throw new Error(r.statusText);const d=await r.json();const lat=d.lat??d.position?.lat;const lng=d.lng??d.lon??d.position?.lng??d.position?.lon;if(lat==null||lng==null)return;const live=d.lt_active===true;const speed=d.speed;const ts=new Date((d.time||Date.now()/1000)*1000).toLocaleTimeString();const popupHtml=`<strong>Bottle\'s position</strong><br>${live?'<br><span style=\"color:#e63946;font-weight:bold\">LIVE TRACKING</span>':''}<br>Last Update: ${ts}<br>Speed: ${speed??'–'} m/s`;
       const icon=trackerIconStatic;
       if(!trackerMarker){trackerMarker=L.marker([lat,lng],{icon}).addTo(map).bindPopup(popupHtml);}else{trackerMarker.setLatLng([lat,lng]);trackerMarker.setIcon(icon);trackerMarker.setPopupContent(popupHtml);}fit();
       // auto popup based on live status
