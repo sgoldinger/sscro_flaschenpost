@@ -25,7 +25,7 @@
   </div>
 
   <div id="map"></div>
-  <div id="zoneMsg" class="zone-alert">Du hast den Ort des Untergangs von John Bottle gefunden! Code: DINO14</div>
+  <div id="zoneMsg" class="zone-alert">Das ist der Place to be für das Feuerwerk! Happy 1.August. Pröschterli!</div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.js"></script>
 
@@ -35,8 +35,8 @@
     const TRACKER_ENDPOINT=`https://floral-bread-d4f1.goldinger.workers.dev/${PUBLIC_SHARE_ID}`;
 
      // Zone settings (center & radius in metres)
-    const ZONE_CENTER = [47.198293, 8.648901];   // grillplatz: 47.198293, 8.648901
-    const ZONE_RADIUS = 5;                     // metres
+    const ZONE_CENTER = [47.197610, 8.650484];   // Home: 47.197610, 8.650484 walensee: [47.126430, 9.296480]
+    const ZONE_RADIUS = 60;                     // metres
 
     const map=L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
     const satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',maxZoom:21}).addTo(map);
