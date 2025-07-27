@@ -82,8 +82,8 @@
       if(!el) return;
       el.style.width       = `${pxSizeWidth}px`;
       el.style.height      = `${pxSizeHeight}px`;
-      el.style.marginLeft  = `${-ax}px`;
-      el.style.marginTop   = `${-ay}px`;
+      el.style.marginLeft  = `${-pxSizeWidth/2}px`;
+      el.style.marginTop   = `${-pxSizeHeight}px`;
       el.style.transformOrigin = '0 0';   // ensure margin maths is respected
     }
     map.off('zoom', scaleFreddy).on('zoom', scaleFreddy);
