@@ -82,33 +82,7 @@
     map.on('zoom zoomend', scaleFreddy);
     scaleFreddy();
     
-    /*
-    /* ── SCALE FREDDY ICON TO MATCH THE CIRCLE ───────────────────── */
-const BASE_ZOOM   = 13;      // icon is 60 × 60 px at this zoom
-const BASE_SIZE   = 90;      // original PNG size (px)
-
-/* keep bottom-centre anchored, resize the icon’s element itself */
-function scaleFreddy() {
-  const z        = map.getZoom();
-  const scale    = map.getZoomScale(z, BASE_ZOOM);   // <1 when you zoom out
-  const pxSize   = BASE_SIZE * scale;                // new width / height
-
-  const el = freddyMarker.getElement();
-  if (!el) return;
-
-  /* resize the <img> / <div> */
-  el.style.width  = `${pxSize}px`;
-  el.style.height = `${pxSize}px`;
-
-  /* offset so the tip (bottom-centre) stays on ZONE_CENTER */
-  el.style.marginLeft = `${-pxSize / 2}px`;   // half width to the left
-  el.style.marginTop  = `${-pxSize}px`;       // full height upwards
-}
-
-/* run once and on every zoom */
-map.on('zoom', scaleFreddy);
-scaleFreddy();
-*/
+   
     /* STATE */
     let trackerMarker,userMarker;
     let lastLive=false;let userInteracted=false;
