@@ -65,18 +65,21 @@
 
     // scale freddy icon with zoom, similar to circle
     const BASE_ZOOM = 13;                      // zoom level where icon is 60×60
-    const BASE_SIZE   = 90;
+    const BASE_WIDTH = 60;
+    const BASE_HEIGHt = 90;
+    
     function scaleFreddy(){
       const z      = map.getZoom();
       const raw    = map.getZoomScale(z, BASE_ZOOM);   // <1 when zoomed-out, >1 when in
       const scale  = Math.min(1, raw);                  // clamp so icon never larger than original
-      const pxSize = BASE_SIZE * scale;
+      const pxSizeWidth = BASE_WIDTH * scale;
+      const pxSizeHeight = BASE_HEIGHT * scale;
       const el     = freddyMarker.getElement();
       if(!el) return;
-      el.style.width       = `${pxSize}px`;
-      el.style.height      = `${pxSize}px`;
-      el.style.marginLeft  = `${-pxSize/2}px`;
-      el.style.marginTop   = `${-pxSize}px`;
+      el.style.width       = `${pxSizeWidth}px`;
+      el.style.height      = `${pxSizeHeight}px`;
+      el.style.marginLeft  = `${-pxSizeWidth/2}px`;
+      el.style.marginTop   = `${-pxSizeHeight}px`;
     }
     map.off('zoom', scaleFreddy).on('zoom', scaleFreddy);
     scaleFreddy();
