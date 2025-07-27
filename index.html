@@ -65,6 +65,7 @@
 
     // scale freddy icon with zoom, similar to circle
     const BASE_ZOOM = 13;                      // zoom level where icon is 60×60
+    const BASE_SIZE   = 90;
     function scaleFreddy(){
       const z      = map.getZoom();
       const raw    = map.getZoomScale(z, BASE_ZOOM);   // <1 when zoomed-out, >1 when in
