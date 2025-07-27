@@ -63,6 +63,26 @@
     const zoneCircle = L.circle(ZONE_CENTER,{radius:ZONE_RADIUS,color:'#d42604',fillOpacity:0.1}).addTo(map);
     const freddyMarker = L.marker(ZONE_CENTER,{icon:freddyIcon,interactive:false}).addTo(map);
 
+    // scale freddy icon with zoom, similar to circle
+    const BASE_ZOOM = 13;                      // zoom level where icon is 60×60
+    function scaleFreddy(){
+      const z      = map.getZoom();
+      const raw    = map.getZoomScale(z, BASE_ZOOM);   // <1 when zoomed-out, >1 when in
+      const scale  = Math.min(1, raw);                  // clamp so icon never larger than original
+      const pxSize = BASE_SIZE * scale;
+      const el     = freddyMarker.getElement();
+      if(!el) return;
+      el.style.width       = `${pxSize}px`;
+      el.style.height      = `${pxSize}px`;
+      el.style.marginLeft  = `${-pxSize/2}px`;
+      el.style.marginTop   = `${-pxSize}px`;
+    }
+    map.off('zoom', scaleFreddy).on('zoom', scaleFreddy);
+    scaleFreddy();
+    map.on('zoom zoomend', scaleFreddy);
+    scaleFreddy();
+    
+    /*
     /* ── SCALE FREDDY ICON TO MATCH THE CIRCLE ───────────────────── */
 const BASE_ZOOM   = 13;      // icon is 60 × 60 px at this zoom
 const BASE_SIZE   = 90;      // original PNG size (px)
@@ -88,7 +108,7 @@ function scaleFreddy() {
 /* run once and on every zoom */
 map.on('zoom', scaleFreddy);
 scaleFreddy();
-
+*/
     /* STATE */
     let trackerMarker,userMarker;
     let lastLive=false;let userInteracted=false;
