@@ -55,13 +55,24 @@
 
      const freddyIcon = L.icon({
       iconUrl   : 'img/freddy-location.png',
-      iconSize  : [60, 80],      // image dimensions
+      iconSize  : [60, 90],      // image dimensions
       iconAnchor: [40, 120]       // x-offset, y-offset from top‑left of image to lat/lon anchor
     });
 
     /* ZONE CIRCLE */
     const zoneCircle = L.circle(ZONE_CENTER,{radius:ZONE_RADIUS,color:'#d42604',fillOpacity:0.1}).addTo(map);
     const freddyMarker = L.marker(ZONE_CENTER,{icon:freddyIcon,interactive:false}).addTo(map);
+
+     // scale freddy icon with zoom, similar to circle
+    const BASE_ZOOM = 13;                      // zoom level where icon is 60×60
+    function scaleFreddy(){
+      const z = map.getZoom();
+      const scale = Math.pow(2, z - BASE_ZOOM); // doubling tiles each zoom
+      const el = freddyMarker.getElement();
+      if(el) el.style.transform = `translate(-40px,-120px) scale(${1/scale})`; // keep anchor
+    }
+    map.on('zoom zoomend', scaleFreddy);
+    scaleFreddy();
 
     /* STATE */
     let trackerMarker,userMarker;
