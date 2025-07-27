@@ -56,7 +56,7 @@
      const freddyIcon = L.icon({
       iconUrl   : 'img/freddy-location.png',
       iconSize  : [60, 90],      // image dimensions
-      iconAnchor: [60, 150]       // x-offset, y-offset from top‑left of image to lat/lon anchor
+      iconAnchor: [60, 100]       // x-offset, y-offset from top‑left of image to lat/lon anchor
     });
 
     /* ZONE CIRCLE */
@@ -67,7 +67,7 @@
     const BASE_ZOOM = 13;                      // zoom level where icon is 60×60
     const BASE_WIDTH = 60;
     const BASE_HEIGHT = 90;
-    const BASE_ANCHOR = { x: 60, y: 150 }; // anchor we set in iconAnchor
+    const BASE_ANCHOR = { x: 60, y: 100 }; // anchor we set in iconAnchor
     
     function scaleFreddy(){
       const z      = map.getZoom();
