@@ -13,6 +13,7 @@
     /* custom divIcon classes */
     .tracker-icon{background:url('img/tracker-icon.png') center/contain no-repeat;width:25px;height:41px;}
      /* red border when live */
+    .zone-alert{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:#2e86ab;color:#fff;padding:.6rem 1.2rem;border-radius:6px;font-family:sans-serif;z-index:9998;display:none}
   </style>
 </head>
 <body>
@@ -24,7 +25,7 @@
   </div>
 
   <div id="map"></div>
-
+  <div id="zoneMsg" class="zone-alert">You entered the message zone!</div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.js"></script>
 
@@ -42,11 +43,14 @@
     /* ICONS */
     const userIcon=L.icon({iconUrl:'img/user-arrow.png',iconSize:[45,80],iconAnchor:[22,40],popupAnchor:[0,-40]});
     const trackerIconStatic = L.divIcon({
-  className: 'tracker-icon',
-  iconSize:  [110, 110],    // tell Leaflet the real size
-  iconAnchor:[55, 110],       // x-center, y-bottom (a few px above edge)
-  popupAnchor:[0,-40]    
-});
+        className: 'tracker-icon',
+        iconSize:  [110, 110],    // tell Leaflet the real size
+        iconAnchor:[55, 110],       // x-center, y-bottom (a few px above edge)
+        popupAnchor:[0,-40]    
+    });
+
+    /* ZONE CIRCLE */
+    const zoneCircle = L.circle(ZONE_CENTER,{radius:ZONE_RADIUS,color:'#38b000',fillOpacity:0.1}).addTo(map);
 
 
     /* STATE */
@@ -54,19 +58,30 @@
     let lastLive=false;let userInteracted=false;
     map.on('zoomstart dragstart',()=>{userInteracted=true;});
 
-    function fit(){const g=L.featureGroup([trackerMarker,userMarker].filter(Boolean));if(g.getLayers().length&&!userInteracted)map.fitBounds(g.getBounds().pad(.25));}
-
+    let insideZone=false;
+    const zoneMsg = document.getElementById('zoneMsg');
+    
+    //function fit(){const g=L.featureGroup([trackerMarker,userMarker].filter(Boolean));if(g.getLayers().length&&!userInteracted)map.fitBounds(g.getBounds().pad(.25));}
+    function fit(){const g=L.featureGroup([trackerMarker,userMarker,zoneCircle]);if(g.getLayers().length&&!userInteracted)map.fitBounds(g.getBounds().pad(.25));}
+    
     const headingFromEvent=e=>('webkitCompassHeading'in e&&Number.isFinite(e.webkitCompassHeading)?e.webkitCompassHeading:Number.isFinite(e.alpha)?(360-e.alpha)%360:null);
 
     document.getElementById('startBtn').addEventListener('click',async()=>{
       intro.remove();
-      if('geolocation'in navigator){navigator.geolocation.watchPosition(({coords})=>{const{latitude,longitude,heading}=coords;if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center center'}).addTo(map).bindPopup('Sailor\'s position and heading');}else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}fit();},console.warn,{enableHighAccuracy:true,maximumAge:0});}
+      if('geolocation'in navigator){navigator.geolocation.watchPosition(({coords})=>{const{latitude,longitude,heading}=coords;if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center center'}).addTo(map).bindPopup('Sailor\'s position and heading');}else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}checkZone([latitude,longitude]);fit();},console.warn,{enableHighAccuracy:true,maximumAge:0});}
       if(typeof DeviceOrientationEvent==='function'&&typeof DeviceOrientationEvent.requestPermission==='function'){try{const p=await DeviceOrientationEvent.requestPermission();if(p==='granted')enableOrientation();}catch{console.warn('orientation denied');}}else{enableOrientation();}
       updateTracker();setInterval(updateTracker,POLLING_MS);
     },{once:true});
 
     function enableOrientation(){if(!('DeviceOrientationEvent'in window))return;window.addEventListener('deviceorientation',e=>{const h=headingFromEvent(e);if(h!=null&&userMarker)userMarker.setRotationAngle(h);},true);}    
-
+    
+    /* ZONE CHECK */
+    function checkZone([lat,lon]){
+      const dist=map.distance([lat,lon],ZONE_CENTER);
+      if(dist<=ZONE_RADIUS && !insideZone){insideZone=true;zoneMsg.style.display='block';}
+      else if(dist>ZONE_RADIUS && insideZone){insideZone=false;zoneMsg.style.display='none';}
+    }
+    
     async function updateTracker(){try{const r=await fetch(TRACKER_ENDPOINT);if(!r.ok)throw new Error(r.statusText);const d=await r.json();const lat=d.lat??d.position?.lat;const lng=d.lng??d.lon??d.position?.lng??d.position?.lon;if(lat==null||lng==null)return;const live=d.lt_active===true;const speed=d.speed;const alt=d.alt;const ts=new Date((d.time||Date.now()/1000)*1000).toLocaleTimeString();const popupHtml=`<strong>Bottle\'s position</strong><br>${live?'<span style=\"color:#e63946;font-weight:bold\">LIVE TRACKING</span>':''}<br>Last Update: ${ts}<br>Speed: ${speed??'–'} m/s<br>Altitude: ${alt??'–'} m`;
       const icon=trackerIconStatic;
       if(!trackerMarker){trackerMarker=L.marker([lat,lng],{icon}).addTo(map).bindPopup(popupHtml);}else{trackerMarker.setLatLng([lat,lng]);trackerMarker.setIcon(icon);trackerMarker.setPopupContent(popupHtml);}fit();
