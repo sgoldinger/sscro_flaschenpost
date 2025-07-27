@@ -25,7 +25,7 @@
   </div>
 
   <div id="map"></div>
-  <div id="zoneMsg" class="zone-alert">Das ist der Place to be für das Feuerwerk! Happy 1.August. Pröschterli!</div>
+  <div id="zoneMsg" class="zone-alert">Das ist der Place to be für das Feuerwerk! Happy 1.August. Pröschterli Brudi!</div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.js"></script>
 
@@ -36,7 +36,7 @@
 
      // Zone settings (center & radius in metres)
     const ZONE_CENTER = [47.126430, 9.296480];   // Home: 47.197610, 8.650484 walensee: [47.126430, 9.296480]
-    const ZONE_RADIUS = 10;                     // metres
+    const ZONE_RADIUS = 25;                     // metres
 
     const map=L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
     const satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',maxZoom:21}).addTo(map);
@@ -53,9 +53,15 @@
         popupAnchor:[0,-40]    
     });
 
+     const freddyIcon = L.icon({
+      iconUrl   : 'img/freddy-location.png',
+      iconSize  : [60, 60],      // image dimensions
+      iconAnchor: [40, 60]       // x-offset, y-offset from top‑left of image to lat/lon anchor
+    });
+
     /* ZONE CIRCLE */
     const zoneCircle = L.circle(ZONE_CENTER,{radius:ZONE_RADIUS,color:'#d42604',fillOpacity:0.1}).addTo(map);
-
+    const freddyMarker = L.marker(ZONE_CENTER,{icon:freddyIcon,interactive:false}).addTo(map);
 
     /* STATE */
     let trackerMarker,userMarker;
