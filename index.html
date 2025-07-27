@@ -35,8 +35,8 @@
     const TRACKER_ENDPOINT=`https://floral-bread-d4f1.goldinger.workers.dev/${PUBLIC_SHARE_ID}`;
 
      // Zone settings (center & radius in metres)
-    const ZONE_CENTER = [47.197656, 8.650335];   // example coords – adjust as needed
-    const ZONE_RADIUS = 120;                     // metres
+    const ZONE_CENTER = [47.190117, 8.645374];   // avia tankstelle: 47.190117, 8.645374
+    const ZONE_RADIUS = 30;                     // metres
 
     const map=L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
     const satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',maxZoom:21}).addTo(map);
