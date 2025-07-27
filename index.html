@@ -25,7 +25,7 @@
   </div>
 
   <div id="map"></div>
-  <div id="zoneMsg" class="zone-alert">You entered the message zone!</div>
+  <div id="zoneMsg" class="zone-alert">Du hast den Ort des Untergangs von John Bottle gefunden! Code: DINO14</div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.js"></script>
 
@@ -36,7 +36,7 @@
 
      // Zone settings (center & radius in metres)
     const ZONE_CENTER = [47.198293, 8.648901];   // avia tankstelle: 47.190117, 8.645374
-    const ZONE_RADIUS = 30;                     // metres
+    const ZONE_RADIUS = 5;                     // metres
 
     const map=L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
     const satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',maxZoom:21}).addTo(map);
