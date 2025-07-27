@@ -56,7 +56,7 @@
      const freddyIcon = L.icon({
       iconUrl   : 'img/freddy-location.png',
       iconSize  : [60, 90],      // image dimensions
-      iconAnchor: [30, 10000]       // x-offset, y-offset from top‑left of image to lat/lon anchor
+      iconAnchor: [60, 90]       // x-offset, y-offset from top‑left of image to lat/lon anchor
     });
 
     /* ZONE CIRCLE */
@@ -67,6 +67,7 @@
     const BASE_ZOOM = 13;                      // zoom level where icon is 60×60
     const BASE_WIDTH = 60;
     const BASE_HEIGHT = 90;
+    const BASE_ANCHOR = { x: 40, y: 98 }; // anchor we set in iconAnchor
     
     function scaleFreddy(){
       const z      = map.getZoom();
@@ -74,12 +75,16 @@
       const scale  = Math.min(1, raw);                  // clamp so icon never larger than original
       const pxSizeWidth = BASE_WIDTH * scale;
       const pxSizeHeight = BASE_HEIGHT * scale;
+       // anchor scales by the same factor
+      const ax = BASE_ANCHOR.x * scale;
+      const ay = BASE_ANCHOR.y * scale;
       const el     = freddyMarker.getElement();
       if(!el) return;
       el.style.width       = `${pxSizeWidth}px`;
       el.style.height      = `${pxSizeHeight}px`;
-      el.style.marginLeft  = `${-pxSizeWidth/2}px`;
-      el.style.marginTop   = `${-pxSizeHeight}px`;
+      el.style.marginLeft  = `${-ax}px`;
+      el.style.marginTop   = `${-ay}px`;
+      el.style.transformOrigin = '0 0';   // ensure margin maths is respected
     }
     map.off('zoom', scaleFreddy).on('zoom', scaleFreddy);
     scaleFreddy();
