@@ -56,8 +56,8 @@
 
      const freddyIcon = L.icon({
       iconUrl   : 'img/wreck-icon.png', //img/freddy-location.png
-      iconSize  : [200, 150],      // image dimensions 60x90
-      iconAnchor: [150, 210]       // x-offset, y-offset from top‑left of image to lat/lon anchor 60x100
+      iconSize  : [100, 50],      // image dimensions 60x90
+      iconAnchor: [50, 110]       // x-offset, y-offset from top‑left of image to lat/lon anchor 60x100
     });
 
     /* ZONE CIRCLE */
@@ -66,9 +66,9 @@
 
     // scale freddy icon with zoom, similar to circle
     const BASE_ZOOM = 13;                      // zoom level where icon is 60×60
-    const BASE_WIDTH = 200; //60
-    const BASE_HEIGHT = 150; //90
-    const BASE_ANCHOR = { x: 200, y: 150 }; // anchor we set in iconAnchor 60 100
+    const BASE_WIDTH = 100; //60
+    const BASE_HEIGHT = 50; //90
+    const BASE_ANCHOR = { x: 100, y: 50 }; // anchor we set in iconAnchor 60 100
     
     function scaleFreddy(){
       const z      = map.getZoom();
