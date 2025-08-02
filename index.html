@@ -22,6 +22,7 @@
     <img src="img/intro-icon.png" alt="intro icon" style="width:120px;height:auto;margin-bottom:1rem;">
     <h2 style="margin:0">SSCRo - Letzte Runde 2025</h2>
     <p style="margin:0 1rem">Auf der Suche nach der Flaschenpost von Captain John Bottle! Bitte bestätige nach dem Start, dass die GPS- und Kompass-Funktion verwendet werden darf.</p>
+    <p id="countdown" style="font-size:1.3rem;font-weight:bold"></p>
     <button id="startBtn">Start</button>
   </div>
 
@@ -44,6 +45,29 @@
 
     const intro=document.getElementById('intro');
     satellite.once('tileload',()=>{intro.style.display='flex';});
+
+    const target = new Date(2025, 9, 4, 11, 0, 0);   // months 0-based → 9 = October
+const cdEl   = document.getElementById('countdown');
+
+function tick() {
+  const now   = new Date();
+  const diff  = target - now;              // milliseconds
+  if (diff <= 0) {
+    cdEl.textContent = "🎉 Heute ist es soweit!";
+    clearInterval(timer);
+    return;
+  }
+  const s  = Math.floor(diff / 1000) % 60;
+  const m  = Math.floor(diff / 60000) % 60;
+  const h  = Math.floor(diff / 3600000) % 24;
+  const d  = Math.floor(diff / 86400000);
+  cdEl.textContent =
+    `${d} T ${h.toString().padStart(2,'0')} h `
+  + `${m.toString().padStart(2,'0')} m ${s.toString().padStart(2,'0')} s`;
+}
+
+const timer = setInterval(tick, 1000);
+tick();                      // run once immediately
 
     /* ICONS */
     const userIcon=L.icon({iconUrl:'img/user-arrow.png',iconSize:[45,80],iconAnchor:[22,40],popupAnchor:[0,-40]});
