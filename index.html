@@ -26,7 +26,7 @@
   </div>
 
   <div id="map"></div>
-  <div id="zoneMsg" class="zone-alert">Das ist der Place to be für das Feuerwerk! Happy 1.August. Pröschterli Brudi!</div>
+  <div id="zoneMsg" class="zone-alert">Im Logbuch, das noch auf dem Wrack der HMS Corkscrew liegt, ist noch knapp zu lesen: …wenn mein Magen zur Abendstund knurrt, gibt’s die letzte Runde hier: 🌊 + 👀 </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.js"></script>
 
@@ -36,7 +36,7 @@
     const TRACKER_ENDPOINT=`https://floral-bread-d4f1.goldinger.workers.dev/${PUBLIC_SHARE_ID}`;
 
      // Zone settings (center & radius in metres)
-    const ZONE_CENTER = [47.648547, 9.330724];   // Home: 47.197610, 8.650484 walensee: [47.126430, 9.296480] / bodensee: [47.648547, 9.330724]
+    const ZONE_CENTER = [47.197610, 8.650484];   // Home: 47.197610, 8.650484 walensee: [47.126430, 9.296480] / bodensee: [47.648547, 9.330724]
     const ZONE_RADIUS = 150;                     // metres (walensee = 50)
 
     const map=L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
