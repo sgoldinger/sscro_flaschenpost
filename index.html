@@ -49,38 +49,38 @@
     satellite.once('tileload',()=>{intro.style.display='flex';});
 
     const target = new Date(2025, 9, 4, 11, 0, 0);   // months 0-based → 9 = October
-const cdEl   = document.getElementById('countdown');
+    const cdEl   = document.getElementById('countdown');
 
-function tick() {
-  const now   = new Date();
-  const diff  = target - now;              // milliseconds
-  if (diff <= 0) {
-    cdEl.textContent = "🎉 Heute ist es soweit!";
-    clearInterval(timer);
-    return;
-  }
-  const s  = Math.floor(diff / 1000) % 60;
-  const m  = Math.floor(diff / 60000) % 60;
-  const h  = Math.floor(diff / 3600000) % 24;
-  const d  = Math.floor(diff / 86400000);
-  cdEl.textContent =
-    `${d} T ${h.toString().padStart(2,'0')} h `
-  + `${m.toString().padStart(2,'0')} m ${s.toString().padStart(2,'0')} s`;
-}
+    function tick() {
+      const now   = new Date();
+      const diff  = target - now;              // milliseconds
+      if (diff <= 0) {
+        cdEl.textContent = "🎉 Heute ist es soweit!";
+        clearInterval(timer);
+        return;
+      }
+      const s  = Math.floor(diff / 1000) % 60;
+      const m  = Math.floor(diff / 60000) % 60;
+      const h  = Math.floor(diff / 3600000) % 24;
+      const d  = Math.floor(diff / 86400000);
+      cdEl.textContent =
+        `${d} T ${h.toString().padStart(2,'0')} h `
+      + `${m.toString().padStart(2,'0')} m ${s.toString().padStart(2,'0')} s`;
+    }
 
-const timer = setInterval(tick, 1000);
-tick();                      // run once immediately
+    const timer = setInterval(tick, 1000);
+    tick();                      // run once immediately
 
 
-  async function checkPassword() {
-  const pw = prompt('Bitte Passwort eingeben:');
-  if (!pw) return false;
-
-  const enc  = new TextEncoder().encode(pw);
-  const buf  = await crypto.subtle.digest('SHA-256', enc);
-  const hex  = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-  return hex === PW_HASH_HEX;
-}
+    async function checkPassword() {
+      const pw = prompt('Bitte Passwort eingeben:');
+      if (!pw) return false;
+    
+      const enc  = new TextEncoder().encode(pw);
+      const buf  = await crypto.subtle.digest('SHA-256', enc);
+      const hex  = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+      return hex === PW_HASH_HEX;
+    }
     
     /* ICONS */
     
@@ -89,15 +89,15 @@ tick();                      // run once immediately
 
     const freddyIcon = L.icon({
       iconUrl   : 'img/wreck-icon.png', //img/freddy-location.png
-      iconSize  : [150, 112],      // image dimensions 60x90
-      iconAnchor: [150, 122]       // x-offset, y-offset from top‑left of image to lat/lon anchor 60x100
+      iconSize  : [150, 112],           // image dimensions 60x90
+      iconAnchor: [150, 122]            // x-offset, y-offset from top‑left of image to lat/lon anchor 60x100
     });
 
     const zoneCircle = L.circle(ZONE_CENTER,{radius:ZONE_RADIUS,color:'#d42604',fillOpacity:0.1}).addTo(map);
     const freddyMarker = L.marker(ZONE_CENTER,{icon:freddyIcon,interactive:false}).addTo(map);
 
-    // scale freddy icon with zoom, similar to circle
-    const BASE_ZOOM = 13;                      // zoom level where icon is 60×60
+    // scale wreck icon with zoom, similar to circle
+    const BASE_ZOOM = 13;  // zoom level where icon is 60×60
     const BASE_WIDTH = 150; //60
     const BASE_HEIGHT = 112; //90
     const BASE_ANCHOR = { x: 150, y: 112 }; // anchor we set in iconAnchor 60 100
@@ -116,12 +116,12 @@ tick();                      // run once immediately
 
     document.getElementById('startBtn').addEventListener('click', async () => {
       if (!(await checkPassword())) {
-    alert('Falsches Passwort – versuch es noch einmal');
-    return;
-  }
+      alert('Falsches Passwort – versuch es noch einmal');
+      return;
+    }
 
-      // correct password → proceed
-      intro.remove();intro.remove();if('geolocation'in navigator){navigator.geolocation.watchPosition(({coords})=>{const{latitude,longitude,heading}=coords;if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center center'}).addTo(map).bindPopup('Sailor\'s position and heading');}else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}checkZone([latitude,longitude]);fit();},console.warn,{enableHighAccuracy:true,maximumAge:0});}if(typeof DeviceOrientationEvent==='function'&&typeof DeviceOrientationEvent.requestPermission==='function'){try{const p=await DeviceOrientationEvent.requestPermission();if(p==='granted')enableOrientation();}catch{console.warn('orientation denied');}}else{enableOrientation();}updateTracker();setInterval(updateTracker,POLLING_MS);},{once:true});
+    // correct password → proceed
+    intro.remove();intro.remove();if('geolocation'in navigator){navigator.geolocation.watchPosition(({coords})=>{const{latitude,longitude,heading}=coords;if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center center'}).addTo(map).bindPopup('Sailor\'s position and heading');}else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}checkZone([latitude,longitude]);fit();},console.warn,{enableHighAccuracy:true,maximumAge:0});}if(typeof DeviceOrientationEvent==='function'&&typeof DeviceOrientationEvent.requestPermission==='function'){try{const p=await DeviceOrientationEvent.requestPermission();if(p==='granted')enableOrientation();}catch{console.warn('orientation denied');}}else{enableOrientation();}updateTracker();setInterval(updateTracker,POLLING_MS);},{once:true});
 
     function enableOrientation(){if(!('DeviceOrientationEvent'in window))return;window.addEventListener('deviceorientation',e=>{const h=headingFromEvent(e);if(h!=null&&userMarker)userMarker.setRotationAngle(h);},true);}
 
