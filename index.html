@@ -71,16 +71,6 @@ function tick() {
 const timer = setInterval(tick, 1000);
 tick();                      // run once immediately
 
-
-  async function checkPassword() {
-  const pw = prompt('Bitte Passwort eingeben:');
-  if (!pw) return false;
-
-  const enc  = new TextEncoder().encode(pw);
-  const buf  = await crypto.subtle.digest('SHA-256', enc);
-  const hex  = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-  return hex === PW_HASH_HEX;
-}
     
     /* ICONS */
     
@@ -114,6 +104,16 @@ tick();                      // run once immediately
 
     const headingFromEvent=e=>('webkitCompassHeading'in e&&Number.isFinite(e.webkitCompassHeading)?e.webkitCompassHeading:Number.isFinite(e.alpha)?(360-e.alpha)%360:null);
 
+      async function checkPassword() {
+  const pw = prompt('Bitte Passwort eingeben:');
+  if (!pw) return false;
+
+  const enc  = new TextEncoder().encode(pw);
+  const buf  = await crypto.subtle.digest('SHA-256', enc);
+  const hex  = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  return hex === PW_HASH_HEX;
+}
+    
     document.getElementById('startBtn').addEventListener('click', async () => {
       if (!(await checkPassword())) {
     alert('Falsches Passwort – versuch es noch einmal');
