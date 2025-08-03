@@ -165,7 +165,7 @@ function startGeolocation(){
     if(!userMarker){
       userMarker=L.marker([latitude,longitude],{
         icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center center'
-      }).addTo(map).bindPopup("Sailor's position und Kurs");
+      }).addTo(map).bindPopup("Sailor's position and heading");
     }else{
       userMarker.setLatLng([latitude,longitude]);
       if(Number.isFinite(heading)) userMarker.setRotationAngle(heading);
