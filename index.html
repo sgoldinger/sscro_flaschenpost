@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html,body,#map{height:100%;margin:0;}
+
+    /* intro overlay */
     #intro{
       position:fixed;inset:0;display:none;flex-direction:column;
       align-items:center;justify-content:center;background:rgba(0,0,0,.2);
@@ -18,10 +20,14 @@
       padding:.6rem 1.2rem;border:none;border-radius:6px;
       background:#2e86ab;color:#fff;font-size:1rem;cursor:pointer
     }
+
+    /* tracker pin (bottle) */
     .tracker-icon{
       background:url('img/tracker-icon.png') center/contain no-repeat;
       width:25px;height:41px;
     }
+
+    /* zone-entry banner */
     .zone-alert{
       position:fixed;bottom:10px;left:50%;transform:translateX(-50%);
       background:#f7b324;color:#000;font-weight:bold;font-size:1.1rem;
@@ -36,9 +42,10 @@
     <img src="img/intro-icon.png" alt="intro icon" />
     <h2 style="margin:0">SSCRo – Letzte Runde 2025</h2>
     <p style="margin:0 1rem">
-      Auf der Suche nach der Flaschenpost von Captain John Bottle und dem Wrack
-      der HMS Corkscrew!<br/>Bitte bestätige nach dem Start, dass GPS- und
-      Kompass-Funktionen verwendet werden dürfen.
+      Auf der Suche nach der Flaschenpost von Captain&nbsp;John&nbsp;Bottle und dem
+      Wrack der HMS Corkscrew!<br />
+      Bitte bestätige nach dem Start, dass GPS- und Kompass-Funktionen verwendet
+      werden dürfen.
     </p>
     <p style="font-size:1.3rem;font-weight:bold">Das Abenteuer beginnt in:</p>
     <p id="countdown" style="font-size:1.3rem;font-weight:bold"></p>
@@ -62,15 +69,14 @@ const PUBLIC_SHARE_ID = 'b995bb953c';
 const POLLING_MS      = 15000;
 const TRACKER_ENDPOINT = `https://floral-bread-d4f1.goldinger.workers.dev/${PUBLIC_SHARE_ID}`;
 
-/* zone */
-const ZONE_CENTER = [47.648547, 9.330724];
+const ZONE_CENTER = [47.648547, 9.330724];   // Bodensee
 const ZONE_RADIUS = 150;
 
-/* password hash (sha-256 of "johnbottle25") */
+/* password hash for "johnbottle25" */
 const PW_HASH_HEX = 'dd9ddae86b9ddc5a68b98636336eb90236a13f972422b7d354939c1aa40be2c6';
 
 /* countdown target */
-const COUNT_TARGET = new Date(2025,9,4,11,0,0);   // 4 Oct 2025 11:00
+const COUNT_TARGET = new Date(2025, 9, 4, 11, 0, 0);   // 4 Oct 2025 11 : 00
 
 /* ───────── MAP ───────── */
 const map = L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
@@ -93,16 +99,12 @@ const zoneCircle   = L.circle(ZONE_CENTER,{radius:ZONE_RADIUS,color:'#d42604',fi
 const freddyMarker = L.marker(ZONE_CENTER,{icon:freddyIcon,interactive:false}).addTo(map);
 
 /* scale freddy with zoom */
-const B_ZOOM=13,B_W=150,B_H=112,B_A={x:150,y:112};
-function scaleFreddy(){
-  const f=Math.min(1,map.getZoomScale(map.getZoom(),B_ZOOM));
-  const w=B_W*f,h=B_H*f;
-  const el=freddyMarker.getElement(); if(!el) return;
-  el.style.width=`${w}px`; el.style.height=`${h}px`;
-  el.style.marginLeft=`-${w/2}px`; el.style.marginTop=`-${h}px`;
-  el.style.transformOrigin='0 0';
-}
-map.on('zoom',scaleFreddy); scaleFreddy();
+const B_ZOOM=13,B_W=150,B_H=112;
+map.on('zoom',()=>{const f=Math.min(1,map.getZoomScale(map.getZoom(),B_ZOOM));
+  const w=B_W*f,h=B_H*f,el=freddyMarker.getElement();if(el){
+    el.style.width=`${w}px`;el.style.height=`${h}px`;
+    el.style.marginLeft=`-${w/2}px`;el.style.marginTop=`-${h}px`;
+  }}); map.fire('zoom');
 
 /* ───────── STATE ───────── */
 let trackerMarker,userMarker,lastLive=false,userInteracted=false;
@@ -121,35 +123,32 @@ const headingFromEvent = e =>
     ? e.webkitCompassHeading
     : Number.isFinite(e.alpha) ? (360-e.alpha)%360 : null;
 
-/* ───── countdown ───── */
+/* countdown */
 const cdEl=document.getElementById('countdown');
-function tick(){
-  const diff=COUNT_TARGET - Date.now();
+const tick=()=>{const diff=COUNT_TARGET-Date.now();
   if(diff<=0){cdEl.textContent='🎉 Heute ist es soweit!';clearInterval(tID);return;}
   const s=Math.floor(diff/1000)%60,m=Math.floor(diff/60000)%60,
         h=Math.floor(diff/3600000)%24,d=Math.floor(diff/86400000);
   cdEl.textContent=`${d} T ${String(h).padStart(2,'0')} h `
-                 +`${String(m).padStart(2,'0')} m ${String(s).padStart(2,'0')} s`;
-}
+                  +`${String(m).padStart(2,'0')} m ${String(s).padStart(2,'0')} s`;};
 const tID=setInterval(tick,1000); tick();
 
-/* ───── password helper ───── */
-async function checkPassword(){
-  const pw=prompt('Bitte Passwort eingeben:'); if(!pw) return false;
-  const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
-  const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  return hex===PW_HASH_HEX;
+/* sha-256 helper */
+async function sha256Hex(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-/* ───── compass permission ───── */
-async function requestCompass(){
+/* ask motion/orientation immediately on click */
+function requestCompassNow(){
   if(!('DeviceOrientationEvent' in window)) return;
   if(typeof DeviceOrientationEvent.requestPermission==='function'){
-    try{
-      const p=await DeviceOrientationEvent.requestPermission();
-      if(p==='granted') enableOrientation();
-    }catch{}
-  }else{ enableOrientation(); }
+    DeviceOrientationEvent.requestPermission()
+      .then(p=>{if(p==='granted') enableOrientation();})
+      .catch(()=>{});            // ignore denial
+  }else{
+    enableOrientation();         // Android / older iOS
+  }
 }
 function enableOrientation(){
   window.addEventListener('deviceorientation',e=>{
@@ -157,12 +156,11 @@ function enableOrientation(){
   },true);
 }
 
-/* ───── geolocation & zone check ───── */
+/* geolocation + zone */
 function startGeolocation(){
   if(!('geolocation' in navigator)) return;
   navigator.geolocation.watchPosition(({coords})=>{
     const {latitude,longitude,heading}=coords;
-
     if(!userMarker){
       userMarker=L.marker([latitude,longitude],{
         icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center center'
@@ -171,33 +169,29 @@ function startGeolocation(){
       userMarker.setLatLng([latitude,longitude]);
       if(Number.isFinite(heading)) userMarker.setRotationAngle(heading);
     }
-
     const dist=map.distance([latitude,longitude],ZONE_CENTER);
-    if(dist<=ZONE_RADIUS && !insideZone){insideZone=true;zoneMsg.style.display='block';}
-    else if(dist>ZONE_RADIUS && insideZone){insideZone=false;zoneMsg.style.display='none';}
-
+    if(dist<=ZONE_RADIUS&&!insideZone){insideZone=true;zoneMsg.style.display='block';}
+    else if(dist>ZONE_RADIUS&&insideZone){insideZone=false;zoneMsg.style.display='none';}
     fit();
   },console.warn,{enableHighAccuracy:true,maximumAge:0});
 }
 
-/* ───── tracker polling ───── */
+/* tracker polling */
 async function updateTracker(){
   try{
     const r=await fetch(TRACKER_ENDPOINT); if(!r.ok) throw new Error(r.statusText);
     const d=await r.json();
     const lat=d.lat??d.position?.lat, lng=d.lng??d.lon??d.position?.lng??d.position?.lon;
     if(lat==null||lng==null) return;
-
     const live=d.lt_active===true, speed=d.speed, alt=d.alt;
     const ts=new Date((d.time||Date.now()/1000)*1000).toLocaleTimeString();
-    const pop=`<strong>Bottle's position</strong><br>`
-             +(live?'<span style="color:#e63946;font-weight:bold">LIVE TRACKING</span><br>':'')
-             +`Last Update: ${ts}<br>Speed: ${speed??'–'} m/s<br>Altitude: ${alt??'–'} m`;
-
+    const html=`<strong>Bottle's position</strong><br>`
+              +(live?'<span style="color:#e63946;font-weight:bold">LIVE TRACKING</span><br>':'')
+              +`Last Update: ${ts}<br>Speed: ${speed??'–'} m/s<br>Altitude: ${alt??'–'} m`;
     if(!trackerMarker){
-      trackerMarker=L.marker([lat,lng],{icon:trackerIcon}).addTo(map).bindPopup(pop);
+      trackerMarker=L.marker([lat,lng],{icon:trackerIcon}).addTo(map).bindPopup(html);
     }else{
-      trackerMarker.setLatLng([lat,lng]); trackerMarker.setPopupContent(pop);
+      trackerMarker.setLatLng([lat,lng]); trackerMarker.setPopupContent(html);
     }
     fit();
     if(live&&!lastLive) trackerMarker.openPopup();
@@ -206,13 +200,16 @@ async function updateTracker(){
   }catch(err){console.error('tracker',err);}
 }
 
-/* ───── START button ───── */
+/* START button */
 document.getElementById('startBtn').addEventListener('click', async () => {
-  if(!(await checkPassword())){alert('Falsches Passwort – versuch es noch einmal');return;}
+  const pw=prompt('Bitte Passwort eingeben:'); if(!pw) return;
+  requestCompassNow();                       // run while click gesture is active
+
+  const ok = (await sha256Hex(pw)) === PW_HASH_HEX;
+  if(!ok){ alert('Falsches Passwort – versuch es noch einmal'); return; }
 
   intro.remove();
   startGeolocation();
-  await requestCompass();
   updateTracker(); setInterval(updateTracker,POLLING_MS);
 },{once:true});
 </script>
