@@ -2,44 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>SSCRo – Letzte Runde 2025: John Bottle</title>
+  <title>SSCRo - Letzte Runde 2025: John Bottle</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png"> 
   <style>
     html,body,#map{height:100%;margin:0;}
-
-    /* intro overlay */
-    #intro{
-      position:fixed;inset:0;display:none;
-      flex-direction:column;align-items:center;justify-content:center;
-      background:rgba(0,0,0,0.2);color:#fff;gap:1rem;z-index:9999;
-      font-family:sans-serif;text-align:center
-    }
-    #intro img{width:120px;height:auto;margin-bottom:1rem}
-    #intro button{
-      padding:.6rem 1.2rem;border:none;border-radius:6px;
-      background:#2e86ab;color:#fff;font-size:1rem;cursor:pointer
-    }
-
-    /* tracker pin (bottle) */
-    .tracker-icon{
-      background:url('img/tracker-icon.png') center/contain no-repeat;
-      width:25px;height:41px;
-    }
-
-    /* zone-entry banner */
-    .zone-alert{
-      position:fixed;bottom:10px;left:50%;transform:translateX(-50%);
-      background:#f7b324;color:#000;font-weight:bold;font-size:1.1rem;
-      padding:.6rem 1.2rem;border-radius:6px;font-family:sans-serif;
-      z-index:9998;display:none
-    }
+    #intro{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);color:#fff;gap:1rem;z-index:9999;font-family:sans-serif;text-align:center}
+    #intro img{width:72px;height:auto}
+    #intro button{padding:.6rem 1.2rem;border:none;border-radius:6px;background:#2e86ab;color:#fff;font-size:1rem;cursor:pointer}
+    .tracker-icon{background:url('img/tracker-icon.png') center/contain no-repeat;width:25px;height:41px;}
+    .zone-alert{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:#f7b324;color:#000;padding:.6rem 1.2rem;border-radius:6px;font-family:sans-serif;font-weight:bold;font-size:1.1rem;z-index:9998;display:none}
   </style>
 </head>
 <body>
-  <!-- intro -------------------------------------------------------------->
-   <div id="intro">
+  <div id="intro">
     <img src="img/intro-icon.png" alt="intro icon" style="width:120px;height:auto;margin-bottom:1rem;">
     <h2 style="margin:0">SSCRo - Letzte Runde 2025</h2>
     <p style="margin:0 1rem">Auf der Suche nach der Flaschenpost von Captain John Bottle und dem Wrack der HMS Corkscrew! Bitte bestätige nach dem Start, dass die GPS- und Kompass-Funktion verwendet werden darf.</p>
@@ -48,191 +24,96 @@
     <button id="startBtn">Start</button>
   </div>
 
-  <!-- map & zone message ------------------------------------------------->
   <div id="map"></div>
-  <div id="zoneMsg" class="zone-alert">
-    Im Logbuch, das noch auf dem Wrack der HMS Corkscrew liegt, ist noch knapp zu lesen: …wenn mein Magen zur Abendstund knurrt, gibt’s hier die letzte Runde: 🌊 + 👀 
-  </div>
-
-  <!-- libs -->
+  <div id="zoneMsg" class="zone-alert">Im Logbuch, das noch auf dem Wrack der HMS Corkscrew liegt, ist noch knapp zu lesen: …wenn mein Magen zur Abendstund knurrt, gibt’s hier die letzte Runde: 🌊 + 👀 </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedmarker.js"></script>
+  <script src="https://unpkg.com/leaflet-rotatedmarker@0.2.0/leaflet.rotatedMarker.js"></script>
 
   <script>
-/* ───────────────────────── CONFIG ───────────────────────── */
-const PUBLIC_SHARE_ID = 'b995bb953c';
-const POLLING_MS      = 15000;
-const TRACKER_ENDPOINT = `https://floral-bread-d4f1.goldinger.workers.dev/${PUBLIC_SHARE_ID}`;
+    const PUBLIC_SHARE_ID='b995bb953c';
+    const POLLING_MS=15000;
+    const TRACKER_ENDPOINT=`https://floral-bread-d4f1.goldinger.workers.dev/${PUBLIC_SHARE_ID}`;
 
-/* zone */
-const ZONE_CENTER = [47.197610, 8.650484];   // Home: [47.197610, 8.650484] walensee: [47.126430, 9.296480] / bodensee: [47.648547, 9.330724]
-const ZONE_RADIUS = 150;                     // metres (walensee = 50 / bodensee = 150)
+    // Zone settings (center & radius in metres)
+    const ZONE_CENTER = [47.197610, 8.650484];   // Home: [47.197610, 8.650484] walensee: [47.126430, 9.296480] / bodensee: [47.648547, 9.330724]
+    const ZONE_RADIUS = 150;                     // metres (walensee = 50 / bodensee = 150)
 
-/* password hash (sha-256 of "johnbottle25") */
-const PW_HASH_HEX = 'dd9ddae86b9ddc5a68b98636336eb90236a13f972422b7d354939c1aa40be2c6';
+    const map=L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
+    const satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',maxZoom:21}).addTo(map);
 
-/* countdown target: 4 Oct 2025 11:00 (Europe/Zurich) */
-const COUNTDOWN_TARGET = new Date(2025, 9, 4, 11, 0, 0);   // month index 9 = Oct
+    const intro=document.getElementById('intro');
+    satellite.once('tileload',()=>{intro.style.display='flex';});
 
-/* ───────────────────────── MAP SETUP ────────────────────── */
-const map = L.map('map',{zoomControl:true,inertia:true}).setView([0,0],13);
+    const target = new Date(2025, 9, 4, 11, 0, 0);   // months 0-based → 9 = October
+const cdEl   = document.getElementById('countdown');
 
-const satellite = L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-  { attribution:'Tiles © Esri, Maxar, Earthstar Geographics, GIS User Community', maxZoom:21 }
-).addTo(map);
-
-const intro = document.getElementById('intro');
-satellite.once('tileload', () => { intro.style.display = 'flex'; });
-
-/* icons */
-const userIcon = L.icon({ iconUrl:'img/user-arrow.png', iconSize:[45,80], iconAnchor:[22,40] });
-const trackerIcon = L.divIcon({ className:'tracker-icon',
-                                iconSize:[110,110], iconAnchor:[55,110] });
-
-const freddyIcon = L.icon({
-  iconUrl   : 'img/wreck-icon.png', //img/freddy-location.png
-  iconSize  : [150, 112],      // image dimensions 60x90
-  iconAnchor: [150, 122]       // x-offset, y-offset from top‑left of image to lat/lon anchor 60x100
-});
-
-/* zone visuals */
-const zoneCircle = L.circle(ZONE_CENTER,{radius:ZONE_RADIUS,color:'#d42604',fillOpacity:0.1}).addTo(map);
-const freddyMarker = L.marker(ZONE_CENTER,{icon:freddyIcon,interactive:false}).addTo(map);
-
-/* scale freddy icon with zoom */
-const BASE_ZOOM=13, BASE_W=150, BASE_H=112, BASE_A={x:150,y:112};
-function scaleFreddy(){
-  const f = Math.min(1, map.getZoomScale(map.getZoom(), BASE_ZOOM));
-  const w = BASE_W * f, h = BASE_H * f;
-  const el = freddyMarker.getElement(); if(!el) return;
-  el.style.width = `${w}px`; el.style.height = `${h}px`;
-  el.style.marginLeft = `${-w/2}px`; el.style.marginTop = `${-h}px`;
-}
-map.on('zoom', scaleFreddy); scaleFreddy();
-
-/* ─────────────────────── STATE & HELPERS ────────────────── */
-let trackerMarker, userMarker, lastLive=false, userInteracted=false;
-map.on('zoomstart dragstart', () => { userInteracted=true; });
-
-const zoneMsg = document.getElementById('zoneMsg');
-let insideZone=false;
-
-function fit(){
-  const group=L.featureGroup([trackerMarker,userMarker,zoneCircle]);
-  if(group.getLayers().length && !userInteracted)
-    map.fitBounds(group.getBounds().pad(.25));
-}
-
-const headingFromEvent = e =>
-  ('webkitCompassHeading' in e && Number.isFinite(e.webkitCompassHeading))
-    ? e.webkitCompassHeading
-    : Number.isFinite(e.alpha) ? (360 - e.alpha) % 360 : null;
-
-/* ───────────────────── COUNTDOWN TIMER ──────────────────── */
-const cdEl = document.getElementById('countdown');
-function tick(){
-  const diff = COUNTDOWN_TARGET - new Date();
-  if(diff <= 0){ cdEl.textContent = '🎉 Heute ist es soweit!'; clearInterval(timer); return; }
-  const s  = Math.floor(diff/1000)%60,
-        m  = Math.floor(diff/60000)%60,
-        h  = Math.floor(diff/3600000)%24,
-        d  = Math.floor(diff/86400000);
-  cdEl.textContent = `${d} T ${String(h).padStart(2,'0')} h `
-                   + `${String(m).padStart(2,'0')} m ${String(s).padStart(2,'0')} s`;
-}
-const timer = setInterval(tick,1000); tick();
-
-/* ──────────────────── PASSWORD CHECK ───────────────────── */
-async function checkPassword(){
-  const pw = prompt('Bitte Passwort eingeben:'); if(!pw) return false;
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
-  const hex = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  return hex === PW_HASH_HEX;
-}
-
-/* ───────────────────── START BUTTON ─────────────────────── */
-document.getElementById('startBtn').addEventListener('click', async () => {
-  if(!(await checkPassword())){
-    alert('Falsches Passwort – versuch es noch einmal'); return;
+function tick() {
+  const now   = new Date();
+  const diff  = target - now;              // milliseconds
+  if (diff <= 0) {
+    cdEl.textContent = "🎉 Heute ist es soweit!";
+    clearInterval(timer);
+    return;
   }
-
-  intro.remove();
-  startGeolocation();
-  await requestCompass();
-  updateTracker(); setInterval(updateTracker, POLLING_MS);
-},{ once:true });
-
-/* ─────────────── GEOLOCATION + ZONE CHECK ───────────────── */
-function startGeolocation(){
-  if(!('geolocation' in navigator)) return;
-  navigator.geolocation.watchPosition(({coords})=>{
-    const {latitude,longitude,heading}=coords;
-
-    if(!userMarker){
-      userMarker = L.marker([latitude,longitude],{
-        icon:userIcon, rotationAngle:heading||0, rotationOrigin:'center center'
-      }).addTo(map).bindPopup('Sailor’s position und Kurs');
-    }else{
-      userMarker.setLatLng([latitude,longitude]);
-      if(Number.isFinite(heading)) userMarker.setRotationAngle(heading);
-    }
-
-    const dist = map.distance([latitude,longitude], ZONE_CENTER);
-    if(dist<=ZONE_RADIUS && !insideZone){ insideZone=true; zoneMsg.style.display='block'; }
-    else if(dist>ZONE_RADIUS && insideZone){ insideZone=false; zoneMsg.style.display='none'; }
-
-    fit();
-  }, console.warn, { enableHighAccuracy:true, maximumAge:0 });
+  const s  = Math.floor(diff / 1000) % 60;
+  const m  = Math.floor(diff / 60000) % 60;
+  const h  = Math.floor(diff / 3600000) % 24;
+  const d  = Math.floor(diff / 86400000);
+  cdEl.textContent =
+    `${d} T ${h.toString().padStart(2,'0')} h `
+  + `${m.toString().padStart(2,'0')} m ${s.toString().padStart(2,'0')} s`;
 }
 
-/* ───────────────────── COMPASS SUPPORT ──────────────────── */
-async function requestCompass(){
-  if(!('DeviceOrientationEvent' in window)) return;
-  if(typeof DeviceOrientationEvent.requestPermission==='function'){
-    try{ const p=await DeviceOrientationEvent.requestPermission();
-         if(p==='granted') enableOrientation(); }catch{}
-  }else{ enableOrientation(); }
-}
-function enableOrientation(){
-  window.addEventListener('deviceorientation', e=>{
-    const h=headingFromEvent(e); if(h!=null&&userMarker) userMarker.setRotationAngle(h);
-  }, true);
-}
+const timer = setInterval(tick, 1000);
+tick();                      // run once immediately
 
-/* ───────────────────── TRACKER POLLING ──────────────────── */
-async function updateTracker(){
-  try{
-    const r = await fetch(TRACKER_ENDPOINT);
-    if(!r.ok) throw new Error(r.statusText);
-    const d = await r.json();
-    const lat = d.lat ?? d.position?.lat,
-          lng = d.lng ?? d.lon ?? d.position?.lng ?? d.position?.lon;
-    if(lat==null||lng==null) return;
+    /* ICONS */
+    
+    const userIcon=L.icon({iconUrl:'img/user-arrow.png',iconSize:[45,80],iconAnchor:[22,40],popupAnchor:[0,-40]});
+    const trackerIconStatic = L.divIcon({className:'tracker-icon',iconSize:[110,110],iconAnchor:[55,110],popupAnchor:[0,-40]});
 
-    const live  = d.lt_active === true,
-          speed = d.speed,
-          alt   = d.alt,
-          ts    = new Date((d.time||Date.now()/1000)*1000).toLocaleTimeString();
+    const freddyIcon = L.icon({
+      iconUrl   : 'img/wreck-icon.png', //img/freddy-location.png
+      iconSize  : [150, 112],      // image dimensions 60x90
+      iconAnchor: [150, 122]       // x-offset, y-offset from top‑left of image to lat/lon anchor 60x100
+    });
 
-    const html =
-      `<strong>Bottle's position</strong><br>`
-    + (live ? '<span style="color:#e63946;font-weight:bold">LIVE TRACKING</span><br>' : '')
-    + `Last Update: ${ts}<br>Speed: ${speed ?? '–'} m/s<br>Altitude: ${alt ?? '–'} m`;
+    const zoneCircle = L.circle(ZONE_CENTER,{radius:ZONE_RADIUS,color:'#d42604',fillOpacity:0.1}).addTo(map);
+    const freddyMarker = L.marker(ZONE_CENTER,{icon:freddyIcon,interactive:false}).addTo(map);
 
-    if(!trackerMarker){
-      trackerMarker = L.marker([lat,lng],{icon:trackerIcon}).addTo(map).bindPopup(html);
-    }else{
-      trackerMarker.setLatLng([lat,lng]);
-      trackerMarker.setPopupContent(html);
-    }
+    // scale freddy icon with zoom, similar to circle
+    const BASE_ZOOM = 13;                      // zoom level where icon is 60×60
+    const BASE_WIDTH = 150; //60
+    const BASE_HEIGHT = 112; //90
+    const BASE_ANCHOR = { x: 150, y: 112 }; // anchor we set in iconAnchor 60 100
+    
+    function scaleFreddy(){const z=map.getZoom();const raw=map.getZoomScale(z,BASE_ZOOM);const scale=Math.min(1,raw);const w=BASE_WIDTH*scale,h=BASE_HEIGHT*scale;const ax=BASE_ANCHOR.x*scale,ay=BASE_ANCHOR.y*scale;const el=freddyMarker.getElement();if(!el)return;el.style.width=`${w}px`;el.style.height=`${h}px`;el.style.marginLeft=`-${w/2}px`;el.style.marginTop=`-${h}px`;el.style.transformOrigin='0 0';}
+    map.on('zoom',scaleFreddy);scaleFreddy();
 
-    fit();
-    if(live && !lastLive) trackerMarker.openPopup();
-    else if(!live && lastLive) trackerMarker.closePopup();
-    lastLive = live;
-  }catch(err){ console.error('tracker', err); }
-}
+    let trackerMarker,userMarker;let lastLive=false;let userInteracted=false;
+    map.on('zoomstart dragstart',()=>{userInteracted=true;});
+
+    let insideZone=false;const zoneMsg=document.getElementById('zoneMsg');
+
+    function fit(){const g=L.featureGroup([trackerMarker,userMarker,zoneCircle]);if(g.getLayers().length&&!userInteracted)map.fitBounds(g.getBounds().pad(.25));}
+
+    const headingFromEvent=e=>('webkitCompassHeading'in e&&Number.isFinite(e.webkitCompassHeading)?e.webkitCompassHeading:Number.isFinite(e.alpha)?(360-e.alpha)%360:null);
+
+    document.getElementById('startBtn').addEventListener('click', async () => {
+      // simple password prompt before starting
+      const pw = prompt('Bitte Passwort eingeben:');
+      if (pw !== 'johnbottle25') {
+        alert('Falsches Passwort – versuch es noch einmal');
+        return; // do NOT close overlay or start logic
+      }
+      // correct password → proceed
+      intro.remove();intro.remove();if('geolocation'in navigator){navigator.geolocation.watchPosition(({coords})=>{const{latitude,longitude,heading}=coords;if(!userMarker){userMarker=L.marker([latitude,longitude],{icon:userIcon,rotationAngle:heading||0,rotationOrigin:'center center'}).addTo(map).bindPopup('Sailor\'s position and heading');}else{userMarker.setLatLng([latitude,longitude]);if(Number.isFinite(heading))userMarker.setRotationAngle(heading);}checkZone([latitude,longitude]);fit();},console.warn,{enableHighAccuracy:true,maximumAge:0});}if(typeof DeviceOrientationEvent==='function'&&typeof DeviceOrientationEvent.requestPermission==='function'){try{const p=await DeviceOrientationEvent.requestPermission();if(p==='granted')enableOrientation();}catch{console.warn('orientation denied');}}else{enableOrientation();}updateTracker();setInterval(updateTracker,POLLING_MS);},{once:true});
+
+    function enableOrientation(){if(!('DeviceOrientationEvent'in window))return;window.addEventListener('deviceorientation',e=>{const h=headingFromEvent(e);if(h!=null&&userMarker)userMarker.setRotationAngle(h);},true);}
+
+    function checkZone([lat,lon]){const dist=map.distance([lat,lon],ZONE_CENTER);if(dist<=ZONE_RADIUS&&!insideZone){insideZone=true;zoneMsg.style.display='block';}else if(dist>ZONE_RADIUS&&insideZone){insideZone=false;zoneMsg.style.display='none';}}
+
+    async function updateTracker(){try{const r=await fetch(TRACKER_ENDPOINT);if(!r.ok)throw new Error(r.statusText);const d=await r.json();const lat=d.lat??d.position?.lat;const lng=d.lng??d.lon??d.position?.lng??d.position?.lon;if(lat==null||lng==null)return;const live=d.lt_active===true;const speed=d.speed;const alt=d.alt;const ts=new Date((d.time||Date.now()/1000)*1000).toLocaleTimeString();const popupHtml=`<strong>Bottle\'s position</strong><br>${live?'<span style=\"color:#e63946;font-weight:bold\">LIVE TRACKING</span>':''}<br>Last Update: ${ts}<br>Speed: ${speed??'–'} m/s<br>Altitude: ${alt??'–'} m`;if(!trackerMarker){trackerMarker=L.marker([lat,lng],{icon:trackerIconStatic}).addTo(map).bindPopup(popupHtml);}else{trackerMarker.setLatLng([lat,lng]);trackerMarker.setPopupContent(popupHtml);}fit();if(live&&!lastLive){trackerMarker.openPopup();}else if(!live&&lastLive){trackerMarker.closePopup();}lastLive=live;}catch(err){console.error('tracker',err);}}
   </script>
 </body>
 </html>
