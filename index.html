@@ -38,6 +38,12 @@
       padding:.6rem 1.2rem;border-radius:6px;font-family:sans-serif;
       z-index:9998;display:none
     }
+
+    #hudDistance{
+      position:fixed; top:8px; left:8px; color:#fff;
+      font-family:sans-serif; font-size:12px; z-index:9998;
+      text-shadow:0 1px 2px rgba(0,0,0,.6);
+    }
   </style>
 </head>
 <body>
@@ -58,6 +64,7 @@
 
   <!-- MAP + ZONE MESSAGE -->
   <div id="map"></div>
+  <div id="hudDistance"></div>
   <div id="zoneMsg" class="zone-alert">
     Im Logbuch, das noch auf dem Wrack der HMS Corkscrew liegt, ist noch knapp zu
     lesen: …wenn mein Magen zur Abendstund knurrt, gibt’s hier die letzte Runde:
@@ -103,6 +110,15 @@ const freddyIcon  = L.icon({iconUrl:'img/wreck-icon.png',iconSize:[150,112],icon
 const zoneCircle   = L.circle(ZONE_CENTER,{radius:ZONE_RADIUS,color:'#d42604',fillOpacity:.1}).addTo(map);
 const freddyMarker = L.marker(ZONE_CENTER,{icon:freddyIcon,interactive:false}).addTo(map);
 
+// distance HUD setup
+const hudEl = document.getElementById('hudDistance');
+function updateDistanceHud(){
+  if(userMarker && trackerMarker){
+  const d = map.distance(userMarker.getLatLng(), trackerMarker.getLatLng());
+  hudEl.textContent = `Entfernung zur Flasche: ${Math.round(d)} m`;
+  }
+}
+  
 /* scale freddy with zoom */
 const B_ZOOM=13,B_W=150,B_H=112;
 map.on('zoom',()=>{const f=Math.min(1,map.getZoomScale(map.getZoom(),B_ZOOM));
@@ -177,6 +193,7 @@ function startGeolocation(){
     const dist=map.distance([latitude,longitude],ZONE_CENTER);
     if(dist<=ZONE_RADIUS&&!insideZone){insideZone=true;zoneMsg.style.display='block';}
     else if(dist>ZONE_RADIUS&&insideZone){insideZone=false;zoneMsg.style.display='none';}
+    updateDistanceHud();
     fit();
   },console.warn,{enableHighAccuracy:true,maximumAge:0});
 }
@@ -198,6 +215,7 @@ async function updateTracker(){
     }else{
       trackerMarker.setLatLng([lat,lng]); trackerMarker.setPopupContent(html);
     }
+    updateDistanceHud();
     fit();
     if(live&&!lastLive) trackerMarker.openPopup();
     else if(!live&&lastLive) trackerMarker.closePopup();
