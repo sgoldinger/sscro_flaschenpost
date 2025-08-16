@@ -114,7 +114,7 @@ const hudEl = document.getElementById('hudDistance');
 function updateDistanceHud(){
   if(userMarker && trackerMarker){
   const d = map.distance(userMarker.getLatLng(), trackerMarker.getLatLng());
-  hudEl.textContent = `approx. distance to the bottle: ${Math.round(d)} m`;
+  hudEl.textContent = `approx. distance to bottle: ${Math.round(d)} m`;
   }
 }
   
