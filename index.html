@@ -80,7 +80,7 @@ const POLLING_MS      = 15000;
 const TRACKER_ENDPOINT = `https://floral-bread-d4f1.goldinger.workers.dev/${PUBLIC_SHARE_ID}`;
 
 // Zone settings (center & radius in metres)
-const ZONE_CENTER = [47.191903, 8.675639];   // Home: [47.197610, 8.650484] walensee: [47.126430, 9.296480] / bodensee hagnau: [47.648547, 9.330724]
+const ZONE_CENTER = [47.648547, 9.330724];   // Home: [47.197610, 8.650484] walensee: [47.126430, 9.296480] / bodensee hagnau: [47.648547, 9.330724]
 const ZONE_RADIUS = 150;                     // metres (walensee = 50 / bodensee = 150)
 
 /* password hash */
@@ -224,11 +224,11 @@ async function updateTracker(){
 
 /* START button */
 document.getElementById('startBtn').addEventListener('click', async () => {
-  //const pw=prompt('Bitte Passwort eingeben:'); if(!pw) return; //comment for no password
+  const pw=prompt('Bitte Passwort eingeben:'); if(!pw) return; //comment for no password
   requestCompassNow();                       // run while click gesture is active
 
-  //const ok = (await sha256Hex(pw)) === PW_HASH_HEX; //comment for no password
-  //if(!ok){ alert('Falsches Passwort – versuch es noch einmal'); return; } //comment for no password
+  const ok = (await sha256Hex(pw)) === PW_HASH_HEX; //comment for no password
+  if(!ok){ alert('Falsches Passwort – versuch es noch einmal'); return; } //comment for no password
 
   intro.remove();
   startGeolocation();
