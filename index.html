@@ -211,10 +211,10 @@ async function updateTracker(){
               +`Last Update: ${ts}<br>Speed: ${speed??'–'} m/s<br>Altitude: ${alt??'–'} m`;
     if(!trackerMarker){
       //trackerMarker=L.marker([lat,lng],{icon:trackerIcon}).addTo(map).bindPopup(html); //CHANGE HERE
-      trackerMarker=L.marker([47.566011, 9.381466],{icon:trackerIcon}).addTo(map).bindPopup(html);
+      trackerMarker=L.marker([47.614652, 9.373627],{icon:trackerIcon}).addTo(map).bindPopup(html);
     }else{
       //trackerMarker.setLatLng([lat,lng]); trackerMarker.setPopupContent(html); //CHANGE HERE
-      trackerMarker.setLatLng([47.566011, 9.381466]); trackerMarker.setPopupContent(html);
+      trackerMarker.setLatLng([47.614652, 9.373627]); trackerMarker.setPopupContent(html);
        
     }
     updateDistanceHud();
