@@ -210,9 +210,12 @@ async function updateTracker(){
               +(live?'<span style="color:#e63946;font-weight:bold">LIVE TRACKING</span><br>':'')
               +`Last Update: ${ts}<br>Speed: ${speed??'–'} m/s<br>Altitude: ${alt??'–'} m`;
     if(!trackerMarker){
-      trackerMarker=L.marker([lat,lng],{icon:trackerIcon}).addTo(map).bindPopup(html);
+      //trackerMarker=L.marker([lat,lng],{icon:trackerIcon}).addTo(map).bindPopup(html); //CHANGE HERE
+      trackerMarker=L.marker([47.126430, 9.296480],{icon:trackerIcon}).addTo(map).bindPopup(html);
     }else{
-      trackerMarker.setLatLng([lat,lng]); trackerMarker.setPopupContent(html);
+      //trackerMarker.setLatLng([lat,lng]); trackerMarker.setPopupContent(html); //CHANGE HERE
+      trackerMarker.setLatLng([47.126430, 9.296480]); trackerMarker.setPopupContent(html);
+       
     }
     updateDistanceHud();
     fit();
