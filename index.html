@@ -224,11 +224,11 @@ async function updateTracker(){
 
 /* START button */
 document.getElementById('startBtn').addEventListener('click', async () => {
-  const pw=prompt('Bitte Passwort eingeben:'); if(!pw) return; //comment for no password
+  //const pw=prompt('Bitte Passwort eingeben:'); if(!pw) return; //comment for no password
   requestCompassNow();                       // run while click gesture is active
 
-  const ok = (await sha256Hex(pw)) === PW_HASH_HEX; //comment for no password
-  if(!ok){ alert('Falsches Passwort – versuch es noch einmal'); return; } //comment for no password
+  //const ok = (await sha256Hex(pw)) === PW_HASH_HEX; //comment for no password
+  //if(!ok){ alert('Falsches Passwort – versuch es noch einmal'); return; } //comment for no password
 
   intro.remove();
   startGeolocation();
