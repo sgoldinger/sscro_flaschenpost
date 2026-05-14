@@ -129,7 +129,7 @@ const ZONES = [
   },
   {
     id: 'zone-5',
-    center: [47.276580, 8.520635], //5km Ziel
+    center: [47.276580, 8.520650], //5km Ziel
     radius: 10,
     color: '#ffff00',
     hasIcon: false,
@@ -142,7 +142,7 @@ const DOTS = [
     id: 'dot-1',
     center: [47.310113, 8.507244],
     color: '#d42604',
-    radius: 6
+    radius: 10
   }
 ];
 
@@ -289,7 +289,54 @@ function enableOrientation(){
   },true);
 }
 
+let audioCtx = null;
+
+function unlockAudio(){
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if(!AudioContext) return;
+
+  if(!audioCtx){
+    audioCtx = new AudioContext();
+  }
+
+  if(audioCtx.state === 'suspended'){
+    audioCtx.resume();
+  }
+}
+
+function vibratePhone(){
+  if('vibrate' in navigator){
+    navigator.vibrate([300, 120, 300]);
+  }
+}
+
+function playEntryTone(){
+  if(!audioCtx) return;
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.value = 880;
+
+  gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.4, audioCtx.currentTime + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.45);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.5);
+}
+
+function notifyZoneEntry(){
+  vibratePhone();
+  playEntryTone();
+}
+  
 /* check all zones */
+  /*
 function checkZones(latitude, longitude){
   let activeZone = null;
 
@@ -306,6 +353,41 @@ function checkZones(latitude, longitude){
       zone.inside = false;
     }
   });
+
+  if(activeZone){
+    zoneMsg.innerHTML = activeZone.message;
+    zoneMsg.style.display = 'block';
+  }else{
+    zoneMsg.style.display = 'none';
+  }
+}
+*/
+  function checkZones(latitude, longitude){
+  let activeZone = null;
+  let newlyEnteredZone = null;
+
+  ZONES.forEach(zone => {
+    const dist = map.distance([latitude, longitude], zone.center);
+    const isInside = dist <= zone.radius;
+
+    if(isInside){
+      if(!zone.inside){
+        newlyEnteredZone = zone;
+      }
+
+      zone.inside = true;
+
+      if(!activeZone){
+        activeZone = zone;
+      }
+    }else{
+      zone.inside = false;
+    }
+  });
+
+  if(newlyEnteredZone){
+    notifyZoneEntry();
+  }
 
   if(activeZone){
     zoneMsg.innerHTML = activeZone.message;
@@ -384,7 +466,7 @@ async function updateTracker(){
 document.getElementById('startBtn').addEventListener('click', async () => {
   //const pw=prompt('Bitte Passwort eingeben:'); if(!pw) return;
   requestCompassNow();
-
+  unlockAudio();
   //const ok = (await sha256Hex(pw)) === PW_HASH_HEX;
   //if(!ok){ alert('Falsches Passwort – versuch es noch einmal'); return; }
 
