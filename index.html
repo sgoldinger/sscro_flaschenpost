@@ -97,7 +97,7 @@ const ZONES = [
   },
   {
     id: 'zone-1',
-    center: [47.301523, 8.508097], //1.2km
+    center: [47.301523, 8.508097], //1.2km [47.301523, 8.508097]
     radius: 10,
     color: '#ee3b3b',
     hasIcon: false,
@@ -105,7 +105,7 @@ const ZONES = [
   },
   {
     id: 'zone-2',
-    center: [47.30080, 8.507250], //1.3km
+    center: [47.30080, 8.507250], //1.3km [47.30080, 8.507250]
     radius: 10,
     color: '#ff7f24',
     hasIcon: false,
@@ -113,7 +113,7 @@ const ZONES = [
   },
   {
     id: 'zone-3',
-    center: [47.290670, 8.507295], //2.6km
+    center: [47.290670, 8.507295], //2.6km [47.290670, 8.507295]
     radius: 10,
     color: '#00cd00',
     hasIcon: false,
@@ -121,7 +121,7 @@ const ZONES = [
   },
   {
     id: 'zone-4',
-    center: [47.287802, 8.509210], //3km
+    center: [47.287802, 8.509210], //3km [47.287802, 8.509210]
     radius: 10,
     color: '#ff1493',
     hasIcon: false,
@@ -129,7 +129,7 @@ const ZONES = [
   },
   {
     id: 'zone-5',
-    center: [47.276580, 8.520650], //5km Ziel
+    center: [47.276580, 8.520665], //5km Ziel [47.276580, 8.520665]
     radius: 10,
     color: '#ffff00',
     hasIcon: false,
@@ -341,7 +341,7 @@ function playEntryTone(times = 3){
 
 function notifyZoneEntry(){
   vibratePhone();
-  playEntryTone(10);
+  playEntryTone(100);
 }
   
 /* check all zones */
