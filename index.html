@@ -87,7 +87,7 @@ const TRACKER_ENDPOINT = `https://floral-bread-d4f1.goldinger.workers.dev/${PUBL
 const ZONES = [
   {
     id: 'wreck',
-    center: [47.197610, 8.650484],
+    center: [47.126430, 9.296480], // Home: [47.197610, 8.650484] walensee: [47.126430, 9.296480] / bodensee hagnau: [47.648547, 9.330724]
     radius: 50,
     color: '#d42604',
     hasIcon: true,
@@ -101,7 +101,7 @@ const ZONES = [
     radius: 50,
     color: '#2e86ab',
     hasIcon: false,
-    message: `Nachricht 1: Hier könnte ein weiterer Hinweis für die Crew erscheinen.`
+    message: `Nachricht 1: Geburtstag Gabriela & Franz.`
   },
   {
     id: 'zone-2',
@@ -109,7 +109,7 @@ const ZONES = [
     radius: 50,
     color: '#3a9d23',
     hasIcon: false,
-    message: `Nachricht 2: Captain John Bottle hat hier eine geheime Spur hinterlassen.`
+    message: `Nachricht 2: Geburtstag Gabriela & Franz.`
   },
   {
     id: 'zone-3',
@@ -117,7 +117,7 @@ const ZONES = [
     radius: 50,
     color: '#7b2cbf',
     hasIcon: false,
-    message: `Nachricht 3: Die Karte flüstert: Der nächste Hinweis ist nicht mehr weit.`
+    message: `Nachricht 3: Geburtstag Gabriela & Franz.`
   },
   {
     id: 'zone-4',
@@ -125,7 +125,7 @@ const ZONES = [
     radius: 50,
     color: '#f77f00',
     hasIcon: false,
-    message: `Nachricht 4: Ein alter Seemann würde hier wohl kurz innehalten.`
+    message: `Nachricht 4: Geburtstag Gabriela & Franz.`
   },
   {
     id: 'zone-5',
@@ -133,7 +133,16 @@ const ZONES = [
     radius: 50,
     color: '#005f73',
     hasIcon: false,
-    message: `Nachricht 5: Das Abenteuer nähert sich seinem Ziel.`
+    message: `Nachricht 5: Geburtstag Gabriela & Franz.`
+  }
+];
+
+const DOTS = [
+  {
+    id: 'dot-1',
+    center: [47.198250, 8.651500],
+    color: '#d42604',
+    radius: 6
   }
 ];
 
@@ -182,6 +191,22 @@ ZONES.forEach(zone => {
   }
 });
 
+const dotLayers = [];
+
+DOTS.forEach(dot => {
+  const dotMarker = L.circleMarker(dot.center, {
+    radius: dot.radius,
+    color: dot.color,
+    fillColor: dot.color,
+    fillOpacity: 1,
+    weight: 2,
+    interactive: false
+  }).addTo(map);
+
+  dot.marker = dotMarker;
+  dotLayers.push(dotMarker);
+});
+
 // distance HUD setup
 const hudEl = document.getElementById('hudDistance');
 function updateDistanceHud(){
@@ -216,7 +241,7 @@ const zoneMsg = document.getElementById('zoneMsg');
 
 /* helpers */
 function fit(){
-  const layers = [trackerMarker, userMarker, ...zoneLayers].filter(Boolean);
+  const layers = [trackerMarker, userMarker, ...zoneLayers, ...dotLayers].filter(Boolean);
   const g = L.featureGroup(layers);
 
   if(g.getLayers().length && !userInteracted) {
