@@ -278,6 +278,16 @@ map.on('zoomstart dragstart',()=>userInteracted=true);
 const zoneMsg = document.getElementById('zoneMsg');
 
 /* helpers */
+let initialUserFocusDone = false;
+
+function fit(){
+  if(userMarker && !userInteracted && !initialUserFocusDone){
+    map.setView(userMarker.getLatLng(), 17);
+    initialUserFocusDone = true;
+  }
+}
+  
+/*
 function fit(){
   const layers = [trackerMarker, userMarker, ...zoneLayers, ...dotLayers].filter(Boolean);
   const g = L.featureGroup(layers);
@@ -286,6 +296,7 @@ function fit(){
     map.fitBounds(g.getBounds().pad(.25));
   }
 }
+*/
 
 const headingFromEvent = e =>
   ('webkitCompassHeading' in e && Number.isFinite(e.webkitCompassHeading))
